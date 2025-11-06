@@ -1,0 +1,302 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tutor {
+  id                    String   @id @default(cuid())
+  tutorId               String   @unique @map("tutor_id")
+  monthsExperience      Int      @map("months_experience")
+  totalSessions         Int      @map("total_sessions_completed")
+  avgHistoricalRating   Float    @map("avg_historical_rating")
+  subjectsTaught        String   @map("subjects_taught")
+  primarySubject        String   @map("primary_subject")
+  rescheduleRate        Float    @map("reschedule_rate")
+  noShowCount           Int      @map("no_show_count")
+  reliabilityScore      Float    @map("reliability_score")
+  certificationLevel    String   @map("certification_level")
+  activeStatus          Boolean  @map("active_status")
+  lastLogin             DateTime? @map("last_login")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  sessions              Session[]
+  aggregates            TutorAggregate?
+  alerts                Alert[]
+  interventions         Intervention[]
+  engagementEvents      EngagementEvent[]
+  experimentAssignments ExperimentAssignment[]
+  
+  @@map("tutors")
+  @@index([activeStatus])
+  @@index([primarySubject])
+  @@index([lastLogin])
+}
+
+model Session {
+  id                    String    @id @default(cuid())
+  sessionId             String    @unique @map("session_id")
+  tutorId               String    @map("tutor_id")
+  sessionDatetime       DateTime  @map("session_datetime")
+  scheduledDuration     Int       @map("scheduled_duration_min")
+  actualDuration        Int       @map("actual_duration_min")
+  subject               String
+  gradeLevel            String    @map("grade_level")
+  isFirstSession        Boolean?  @map("is_first_session")
+  sessionCompleted      Boolean   @map("session_completed")
+  studentShowed         Boolean   @map("student_showed")
+  tutorShowed           Boolean   @map("tutor_showed")
+  connectionQuality     String    @map("connection_quality")
+  hadTechnicalIssues    Boolean?  @map("had_technical_issues")
+  
+  // Video engagement metrics (nullable)
+  studentAttentionPct   Float?    @map("student_attention_pct")
+  tutorCameraOnPct      Float?    @map("tutor_camera_on_pct")
+  tutorSpeakRatio       Float?    @map("tutor_speak_ratio")
+  screenSharePct        Float?    @map("screen_share_pct")
+  
+  // Sentiment scores (nullable)
+  overallSentiment      Float?    @map("overall_sentiment")
+  studentSentiment      Float?    @map("student_sentiment")
+  tutorSentiment        Float?    @map("tutor_sentiment")
+  
+  // Quality scores (nullable)
+  empathyScore          Float?    @map("empathy_score")
+  clarityScore          Float?    @map("clarity_score")
+  engagementScore       Float?    @map("engagement_score")
+  
+  // Student feedback (nullable)
+  studentRating         Float?    @map("student_rating")
+  studentSatisfaction   Float?    @map("student_satisfaction")
+  wouldRecommend        Boolean?  @map("would_recommend")
+  
+  tutor                 Tutor     @relation(fields: [tutorId], references: [tutorId])
+  
+  @@map("sessions")
+  @@index([tutorId])
+  @@index([sessionDatetime])
+  @@index([isFirstSession])
+  @@index([sessionCompleted])
+}
+
+model TutorAggregate {
+  id                      String   @id @default(cuid())
+  tutorId                 String   @unique @map("tutor_id")
+  totalSessions30d        Int      @map("total_sessions_30d")
+  totalSessions7d         Int      @map("total_sessions_7d")
+  avgRating30d            Float    @map("avg_rating_30d")
+  avgRating7d             Float?   @map("avg_rating_7d")
+  avgEngagementScore      Float    @map("avg_engagement_score")
+  avgEmpathyScore         Float    @map("avg_empathy_score")
+  avgClarityScore         Float    @map("avg_clarity_score")
+  avgStudentSatisfaction  Float    @map("avg_student_satisfaction")
+  firstSessionCount       Int      @map("first_session_count")
+  firstSessionAvgRating   Float?   @map("first_session_avg_rating")
+  poorFirstSessionFlag    Boolean  @map("poor_first_session_flag")
+  recommendationRate      Float    @map("recommendation_rate")
+  technicalIssueRate      Float    @map("technical_issue_rate")
+  sentimentTrend7d        Float?   @map("sentiment_trend_7d")
+  churnProbability        Float    @map("churn_probability")
+  churnRiskLevel          String   @map("churn_risk_level")
+  churnSignalsDetected    Int      @map("churn_signals_detected")
+  lastCalculated          DateTime @default(now()) @map("last_calculated")
+  
+  tutor                   Tutor    @relation(fields: [tutorId], references: [tutorId])
+  
+  @@map("tutor_aggregates")
+  @@index([churnRiskLevel])
+  @@index([churnProbability])
+  @@index([poorFirstSessionFlag])
+}
+
+model Alert {
+  id              String   @id @default(cuid())
+  tutorId         String   @map("tutor_id")
+  severity        String   // critical, high, medium, low
+  category        String   // churn, quality, technical, engagement
+  title           String
+  message         String   @db.Text
+  metric          String?  // The specific metric that triggered the alert
+  metricValue     Float?   @map("metric_value")
+  threshold       Float?
+  isAcknowledged  Boolean  @default(false) @map("is_acknowledged")
+  acknowledgedAt  DateTime? @map("acknowledged_at")
+  acknowledgedBy  String?  @map("acknowledged_by")
+  isResolved      Boolean  @default(false) @map("is_resolved")
+  resolvedAt      DateTime? @map("resolved_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  
+  tutor           Tutor    @relation(fields: [tutorId], references: [tutorId])
+  
+  @@map("alerts")
+  @@index([tutorId])
+  @@index([severity])
+  @@index([category])
+  @@index([isAcknowledged])
+  @@index([isResolved])
+  @@index([createdAt])
+}
+
+model Intervention {
+  id                String    @id @default(cuid())
+  tutorId           String    @map("tutor_id")
+  interventionType  String    @map("intervention_type") // engagement, quality, technical, first_session, etc.
+  channel           String    @default("email") // email, sms, in_app, etc.
+  subject           String?   // email subject line
+  content           String    @db.Text // email body or message content
+  templateId        String?   @map("template_id") // reference to template used
+  experimentId      String?   @map("experiment_id") // A/B test group
+  experimentVariant String?   @map("experiment_variant") // control, treatment_a, treatment_b, etc.
+  
+  // Delivery tracking
+  sentAt            DateTime? @map("sent_at")
+  deliveredAt       DateTime? @map("delivered_at")
+  openedAt          DateTime? @map("opened_at")
+  clickedAt         DateTime? @map("clicked_at")
+  respondedAt       DateTime? @map("responded_at")
+  
+  // Response tracking
+  responseType      String?   @map("response_type") // positive, negative, neutral
+  responseNotes     String?   @db.Text @map("response_notes")
+  
+  // Success metrics
+  engagementBefore  Float?    @map("engagement_before")
+  engagementAfter   Float?    @map("engagement_after")
+  sessionsBeforeCount Int?    @map("sessions_before_count")
+  sessionsAfterCount  Int?    @map("sessions_after_count")
+  
+  status            String    @default("pending") // pending, sent, delivered, opened, clicked, responded, failed
+  errorMessage      String?   @db.Text @map("error_message")
+  
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  
+  tutor             Tutor     @relation(fields: [tutorId], references: [tutorId])
+  
+  @@map("interventions")
+  @@index([tutorId])
+  @@index([interventionType])
+  @@index([status])
+  @@index([sentAt])
+  @@index([experimentId])
+  @@index([createdAt])
+}
+
+model EngagementEvent {
+  id          String    @id @default(cuid())
+  tutorId     String    @map("tutor_id")
+  eventType   String    @map("event_type") // login, session_completed, session_scheduled, profile_updated, message_sent, etc.
+  eventData   Json?     @map("event_data") // Additional context as JSON
+  timestamp   DateTime  @default(now())
+  
+  tutor       Tutor     @relation(fields: [tutorId], references: [tutorId])
+  
+  @@map("engagement_events")
+  @@index([tutorId])
+  @@index([eventType])
+  @@index([timestamp])
+  @@index([tutorId, timestamp])
+}
+
+model Experiment {
+  id              String    @id @default(cuid())
+  name            String    @unique
+  hypothesis      String    @db.Text
+  description     String?   @db.Text
+  
+  // Configuration
+  variants        Json      // JSON array of variant names ["control", "treatment_a", "treatment_b"]
+  targetSegment   Json?     @map("target_segment") // JSON of targeting criteria
+  
+  // Metrics to track
+  primaryMetric   String    @map("primary_metric") // engagement_lift, session_count_increase, etc.
+  secondaryMetrics Json?    @map("secondary_metrics")
+  
+  // Timing
+  startDate       DateTime  @map("start_date")
+  endDate         DateTime? @map("end_date")
+  status          String    @default("draft") // draft, active, paused, completed, archived
+  
+  // Results
+  sampleSize      Int?      @map("sample_size")
+  significance    Float?    // p-value
+  winner          String?   // winning variant
+  notes           String?   @db.Text
+  
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  assignments     ExperimentAssignment[]
+  
+  @@map("experiments")
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model ExperimentAssignment {
+  id            String    @id @default(cuid())
+  experimentId  String    @map("experiment_id")
+  tutorId       String    @map("tutor_id")
+  variant       String    // control, treatment_a, treatment_b, etc.
+  assignedAt    DateTime  @default(now()) @map("assigned_at")
+  
+  // Outcome tracking
+  exposedAt     DateTime? @map("exposed_at") // When tutor was actually exposed to the variant
+  convertedAt   DateTime? @map("converted_at") // When desired action occurred
+  conversionValue Float?  @map("conversion_value")
+  
+  experiment    Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  tutor         Tutor      @relation(fields: [tutorId], references: [tutorId])
+  
+  @@unique([experimentId, tutorId])
+  @@map("experiment_assignments")
+  @@index([experimentId])
+  @@index([tutorId])
+  @@index([variant])
+  @@index([assignedAt])
+}
+
+model PatternInsight {
+  id                    String    @id @default(cuid())
+  patternType           String    @map("pattern_type") // engagement_increase, churn_risk, quality_improvement, etc.
+  title                 String
+  description           String    @db.Text
+  
+  // Affected tutors
+  affectedTutorIds      Json      @map("affected_tutor_ids") // JSON array of tutor IDs
+  affectedTutorCount    Int       @map("affected_tutor_count")
+  
+  // Pattern details
+  correlations          Json?     // JSON of correlated metrics
+  statisticalSignificance Float?  @map("statistical_significance")
+  confidenceScore       Float     @map("confidence_score") // 0-1 score of how confident we are
+  
+  // AI-generated
+  aiGeneratedRecommendation String  @db.Text @map("ai_generated_recommendation")
+  aiModel               String?   @map("ai_model") // claude-3, gpt-4, etc.
+  aiPrompt              String?   @db.Text @map("ai_prompt")
+  
+  // Time period analyzed
+  analyzedPeriodStart   DateTime  @map("analyzed_period_start")
+  analyzedPeriodEnd     DateTime  @map("analyzed_period_end")
+  
+  // Status
+  status                String    @default("active") // active, archived, implemented
+  actionTaken           String?   @db.Text @map("action_taken")
+  actionTakenAt         DateTime? @map("action_taken_at")
+  
+  discoveredAt          DateTime  @default(now()) @map("discovered_at")
+  
+  @@map("pattern_insights")
+  @@index([patternType])
+  @@index([confidenceScore])
+  @@index([status])
+  @@index([discoveredAt])
+  @@index([analyzedPeriodStart, analyzedPeriodEnd])
+}
