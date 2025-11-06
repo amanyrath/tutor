@@ -320,3 +320,4 @@ if __name__ == "__main__":
         print("\nEvent type summary:")
         print(events_df['event_type'].value_counts())
 
+

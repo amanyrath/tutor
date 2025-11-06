@@ -7,11 +7,13 @@ export async function GET(request: Request) {
     const tutorId = searchParams.get('tutorId')
     const metricType = searchParams.get('metricType') || 'engagement'
     const period = parseInt(searchParams.get('period') || '30')
+    const days = parseInt(searchParams.get('days') || period.toString())
+    const includeEvents = searchParams.get('includeEvents') === 'true'
 
     // Calculate date thresholds
     const currentPeriodEnd = new Date()
     const currentPeriodStart = new Date()
-    currentPeriodStart.setDate(currentPeriodStart.getDate() - period)
+    currentPeriodStart.setDate(currentPeriodStart.getDate() - days)
 
     const previousPeriodEnd = new Date(currentPeriodStart)
     const previousPeriodStart = new Date(previousPeriodEnd)
@@ -109,13 +111,47 @@ export async function GET(request: Request) {
       }
     }
 
+    // If events are requested, fetch engagement events
+    let events: any[] = []
+    if (includeEvents) {
+      const eventsWhere: any = {
+        timestamp: {
+          gte: currentPeriodStart,
+          lte: currentPeriodEnd
+        }
+      }
+      if (tutorId) {
+        eventsWhere.tutorId = tutorId
+      }
+
+      const engagementEvents = await prisma.engagementEvent.findMany({
+        where: eventsWhere,
+        select: {
+          id: true,
+          eventType: true,
+          timestamp: true,
+          eventData: true
+        },
+        orderBy: {
+          timestamp: 'desc'
+        }
+      })
+
+      events = engagementEvents.map(e => ({
+        timestamp: e.timestamp.toISOString(),
+        eventType: e.eventType,
+        eventData: e.eventData
+      }))
+    }
+
     return NextResponse.json({
       value: currentValue,
       previousValue,
       trend,
       percentChange,
       currentPeriodCount: currentSessions.length,
-      previousPeriodCount: previousSessions.length
+      previousPeriodCount: previousSessions.length,
+      ...(includeEvents && { events })
     })
   } catch (error) {
     console.error('Error fetching engagement metrics:', error)

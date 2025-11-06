@@ -245,3 +245,4 @@ Check the main [README.md](./README.md) for:
 
 Built with Next.js 14, Prisma, PostgreSQL, and shadcn/ui.
 
+

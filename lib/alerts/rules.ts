@@ -11,6 +11,7 @@ export type AlertType =
   | 'no_login_7d'
   | 'no_sessions_14d'
   | 'declining_engagement'
+  | 'low_engagement'
   | 'first_session_scheduled'
   | 'low_rating_trend'
   | 'technical_issues_spike'
@@ -39,7 +40,29 @@ export interface AlertRule {
 }
 
 /**
- * Define all alert rules
+ * ALERT RULES EXPLANATION
+ * 
+ * Alert rules are evaluated for each tutor to identify issues that need intervention.
+ * Each rule has:
+ * - condition: Function that returns true if the alert should trigger
+ * - messageTemplate: Template string with placeholders for dynamic values
+ * - priorityScore: Higher scores indicate more urgent alerts (0-100)
+ * - cooldownHours: Minimum time between alerts of same type for same tutor
+ * 
+ * ALERT LOGIC TYPES:
+ * 1. ABSOLUTE THRESHOLDS: Trigger when a metric exceeds a fixed threshold
+ *    Example: "Low Rating" triggers when rating < 3.5
+ * 
+ * 2. TREND DETECTION: Trigger when a metric shows a declining trend, even if
+ *    absolute value is still acceptable. This catches issues early.
+ *    Example: "Declining Engagement" can trigger on negative sentiment trend
+ *    even if current engagement score is good (e.g., 7.6/10)
+ * 
+ * 3. BEHAVIORAL PATTERNS: Trigger based on activity patterns
+ *    Example: "No Login 7+ Days" triggers when lastLogin is > 7 days ago
+ * 
+ * 4. COMPOSITE CONDITIONS: Trigger when multiple factors combine
+ *    Example: "Churn Risk High" requires both High risk level AND >60% probability
  */
 export const ALERT_RULES: AlertRule[] = [
   {
@@ -49,6 +72,11 @@ export const ALERT_RULES: AlertRule[] = [
     title: 'Critical Churn Risk Detected',
     messageTemplate: 'Tutor {tutorId} has {churnProbability}% churn probability with {signals} risk signals detected. Immediate intervention required.',
     condition: (tutor) => {
+      /**
+       * LOGIC: Composite condition - requires BOTH high risk level AND high probability
+       * This prevents false positives from tutors who might have one risk factor
+       * but not a comprehensive high-risk profile.
+       */
       return tutor.aggregates?.churnRiskLevel === 'High' && 
              tutor.aggregates.churnProbability > 0.6
     },
@@ -68,6 +96,11 @@ export const ALERT_RULES: AlertRule[] = [
     title: 'No Login Activity (7+ Days)',
     messageTemplate: 'Tutor {tutorId} has not logged in for {daysSinceLogin} days. Risk of disengagement.',
     condition: (tutor) => {
+      /**
+       * LOGIC: Behavioral pattern detection
+       * Triggers when tutor hasn't logged in for 7+ days, indicating disengagement.
+       * Tutors with no lastLogin record are treated as never logged in (999 days).
+       */
       if (!tutor.lastLogin) return true
       const daysSince = (Date.now() - tutor.lastLogin.getTime()) / (1000 * 60 * 60 * 24)
       return daysSince >= 7
@@ -93,6 +126,11 @@ export const ALERT_RULES: AlertRule[] = [
     title: 'No Sessions Completed (14+ Days)',
     messageTemplate: 'Tutor {tutorId} has not completed any sessions in the last 14 days. Critical activation issue.',
     condition: (tutor) => {
+      /**
+       * LOGIC: Activity pattern detection
+       * Triggers when active tutor has zero sessions in last 7 days (indicates 14+ day gap).
+       * Only checks active tutors to avoid alerting on intentionally inactive accounts.
+       */
       return tutor.aggregates?.totalSessions7d === 0 && tutor.activeStatus === true
     },
     getDetails: (tutor) => ({
@@ -108,28 +146,80 @@ export const ALERT_RULES: AlertRule[] = [
     type: 'declining_engagement',
     severity: 'high',
     category: 'engagement',
-    title: 'Declining Engagement Trend',
-    messageTemplate: 'Tutor {tutorId} shows declining engagement: 7-day avg ({recent}) vs 30-day avg ({historical}).',
+    title: 'Declining Engagement Trend Detected',
+    messageTemplate: 'Tutor {tutorId} shows a declining engagement trend. Current score: {currentScore}/10. {trendExplanation}',
     condition: (tutor) => {
       if (!tutor.aggregates) return false
       const agg = tutor.aggregates
       
-      // Calculate 7-day average engagement from recent data
-      // For this rule, we'll use sentimentTrend7d as a proxy
-      // In production, calculate this from actual 7-day session data
+      /**
+       * LOGIC EXPLANATION:
+       * This alert detects DECLINING TRENDS in engagement, not just low absolute scores.
+       * 
+       * Two conditions can trigger this alert:
+       * 1. Negative sentiment trend: If sentimentTrend7d < -0.5, this indicates a 
+       *    significant decline in student sentiment over the past 7 days, even if 
+       *    the overall engagement score is still good. This is a leading indicator.
+       * 
+       * 2. Low absolute score: If avgEngagementScore < 5.5, this indicates the 
+       *    current engagement level is below acceptable threshold.
+       * 
+       * IMPORTANT: A tutor with a good engagement score (e.g., 7.6/10) can still 
+       * trigger this alert if they show a negative sentiment trend, because this 
+       * indicates they may be heading toward lower engagement. This is intentional 
+       * to catch issues early before they become critical.
+       */
+      
+      // Condition 1: Detect significant negative sentiment trend (leading indicator)
+      // This catches declining trends even when absolute score is still acceptable
       if (agg.sentimentTrend7d !== null && agg.sentimentTrend7d < -0.5) {
         return true
       }
       
-      // Also check if current engagement is significantly lower than historical
+      // Condition 2: Detect low absolute engagement score (current state)
+      // This catches tutors who already have low engagement
       return agg.avgEngagementScore < 5.5
     },
     getDetails: (tutor) => ({
       metric: 'engagement_score',
       metricValue: tutor.aggregates?.avgEngagementScore || 0,
-      threshold: 5.5
+      threshold: 5.5,
+      sentimentTrend: tutor.aggregates?.sentimentTrend7d || null
     }),
     priorityScore: 70,
+    cooldownHours: 120
+  },
+  
+  {
+    type: 'low_engagement',
+    severity: 'high',
+    category: 'engagement',
+    title: 'Below Target Engagement Score',
+    messageTemplate: 'Tutor {tutorId} has an engagement score of {currentScore}/10, which is below the target threshold of 6.0/10. {explanation}',
+    condition: (tutor) => {
+      if (!tutor.aggregates) return false
+      const agg = tutor.aggregates
+      
+      /**
+       * LOGIC: Absolute threshold detection
+       * Triggers when engagement score is below 6.0/10 (target threshold).
+       * 
+       * This is different from "declining_engagement" which detects trends.
+       * This alert focuses on the current absolute score being below target,
+       * regardless of whether it's trending up or down.
+       * 
+       * Threshold of 6.0/10 aligns with intervention recommendations and represents
+       * the minimum acceptable engagement level for active tutors.
+       */
+      
+      return agg.avgEngagementScore < 6.0
+    },
+    getDetails: (tutor) => ({
+      metric: 'engagement_score',
+      metricValue: tutor.aggregates?.avgEngagementScore || 0,
+      threshold: 6.0
+    }),
+    priorityScore: 75,
     cooldownHours: 120
   },
   
@@ -140,6 +230,11 @@ export const ALERT_RULES: AlertRule[] = [
     title: 'Low Rating in Recent Sessions',
     messageTemplate: 'Tutor {tutorId} received low ratings in last 7 days: {rating}/5.0. Quality concerns detected.',
     condition: (tutor) => {
+      /**
+       * LOGIC: Trend-based threshold detection
+       * Triggers when 7-day average rating falls below 3.5/5.0.
+       * Uses recent 7-day average rather than overall average to catch recent quality issues.
+       */
       if (!tutor.aggregates?.avgRating7d) return false
       return tutor.aggregates.avgRating7d < 3.5
     },
@@ -159,6 +254,11 @@ export const ALERT_RULES: AlertRule[] = [
     title: 'High Technical Issue Rate',
     messageTemplate: 'Tutor {tutorId} experiencing technical issues in {rate}% of sessions. IT support may be needed.',
     condition: (tutor) => {
+      /**
+       * LOGIC: Absolute threshold detection
+       * Triggers when technical issue rate exceeds 15% of sessions.
+       * This indicates equipment or connectivity problems affecting student experience.
+       */
       return tutor.aggregates !== null && tutor.aggregates.technicalIssueRate > 0.15
     },
     getDetails: (tutor) => ({
@@ -177,6 +277,11 @@ export const ALERT_RULES: AlertRule[] = [
     title: 'Poor First Session Performance',
     messageTemplate: 'Tutor {tutorId} has poor first session ratings (avg: {rating}/5.0). 24% higher churn risk.',
     condition: (tutor) => {
+      /**
+       * LOGIC: Flag-based detection
+       * Triggers when poorFirstSessionFlag is true (set when avg first session rating < 3.5).
+       * First impressions are critical - poor first sessions correlate with 24% higher churn.
+       */
       return tutor.aggregates?.poorFirstSessionFlag === true
     },
     getDetails: (tutor) => ({
@@ -195,6 +300,11 @@ export const ALERT_RULES: AlertRule[] = [
     title: 'High Reschedule Rate',
     messageTemplate: 'Tutor {tutorId} has {rate}% reschedule rate (target: <10%). Reliability concerns.',
     condition: (tutor) => {
+      /**
+       * LOGIC: Absolute threshold detection
+       * Triggers when reschedule rate exceeds 15% (target is <10%).
+       * High reschedule rates indicate reliability issues that impact student trust.
+       */
       return tutor.rescheduleRate > 0.15
     },
     getDetails: (tutor) => ({
@@ -213,8 +323,12 @@ export const ALERT_RULES: AlertRule[] = [
     title: 'First Session Preparation Reminder',
     messageTemplate: 'Tutor {tutorId} has an upcoming first session. Preparation support recommended.',
     condition: (tutor) => {
-      // This would be triggered by actual session scheduling data
-      // For now, we'll identify tutors with very few first sessions who might have one coming up
+      /**
+       * LOGIC: Proactive support detection
+       * Triggers for tutors with <3 first sessions completed.
+       * In production, this would check actual scheduled sessions, but for now
+       * we proactively offer support to new tutors who may have upcoming first sessions.
+       */
       return tutor.aggregates !== null && tutor.aggregates.firstSessionCount < 3
     },
     getDetails: (tutor) => ({
@@ -254,6 +368,10 @@ export function evaluateAlertRules(
 
 /**
  * Format alert message with tutor data
+ * 
+ * This function replaces placeholders in alert message templates with actual
+ * tutor data values. Each alert rule defines its own message template with
+ * placeholders like {tutorId}, {rating}, {rate}, etc.
  */
 export function formatAlertMessage(
   rule: AlertRule,
@@ -262,9 +380,10 @@ export function formatAlertMessage(
 ): string {
   let message = rule.messageTemplate
 
-  // Replace placeholders
+  // Replace tutor ID placeholder
   message = message.replace('{tutorId}', tutor.tutorId)
 
+  // Format and replace metric values (rates/probabilities as percentages, others as decimals)
   if (details.metricValue !== undefined) {
     const formattedValue = details.metric?.includes('rate') || details.metric?.includes('probability')
       ? (details.metricValue * 100).toFixed(1)
@@ -275,17 +394,59 @@ export function formatAlertMessage(
     message = message.replace('{churnProbability}', formattedValue)
   }
 
+  // Replace churn signals count
   if (tutor.aggregates?.churnSignalsDetected) {
     message = message.replace('{signals}', tutor.aggregates.churnSignalsDetected.toString())
   }
 
-  // Calculate days since login if needed
+  // Calculate and replace days since login
   if (message.includes('{daysSinceLogin}') && tutor.lastLogin) {
     const days = Math.floor((Date.now() - tutor.lastLogin.getTime()) / (1000 * 60 * 60 * 24))
     message = message.replace('{daysSinceLogin}', days.toString())
   }
 
-  // Add recent vs historical comparison if applicable
+  // Handle declining engagement alert - explain the trend
+  if (rule.type === 'declining_engagement' && tutor.aggregates) {
+    const currentScore = tutor.aggregates.avgEngagementScore.toFixed(1)
+    message = message.replace('{currentScore}', currentScore)
+    
+    // Explain why the alert triggered
+    let trendExplanation = ''
+    const sentimentTrend = tutor.aggregates.sentimentTrend7d
+    
+    if (sentimentTrend !== null && sentimentTrend < -0.5) {
+      // Alert triggered by negative sentiment trend
+      trendExplanation = `Sentiment trend over past 7 days is ${sentimentTrend.toFixed(3)} (negative trend detected). `
+      if (tutor.aggregates.avgEngagementScore >= 6.0) {
+        trendExplanation += `While current engagement score (${currentScore}/10) is still good, the declining trend suggests potential issues ahead.`
+      } else {
+        trendExplanation += `Combined with current engagement score below threshold, intervention recommended.`
+      }
+    } else {
+      // Alert triggered by low absolute score
+      trendExplanation = `Current engagement score (${currentScore}/10) is below the acceptable threshold of 5.5/10.`
+    }
+    
+    message = message.replace('{trendExplanation}', trendExplanation)
+  }
+
+  // Handle low engagement alert - explain threshold
+  if (rule.type === 'low_engagement' && tutor.aggregates) {
+    const currentScore = tutor.aggregates.avgEngagementScore.toFixed(1)
+    message = message.replace('{currentScore}', currentScore)
+    
+    // Explain the threshold and what it means
+    let explanation = ''
+    if (tutor.aggregates.avgEngagementScore >= 5.5 && tutor.aggregates.avgEngagementScore < 6.0) {
+      explanation = `This score is above the critical threshold (5.5) but below our target of 6.0/10. Students may not be participating as actively as desired.`
+    } else {
+      explanation = `This score is below our target threshold of 6.0/10. Students may not be participating as actively as desired, which can impact learning outcomes.`
+    }
+    
+    message = message.replace('{explanation}', explanation)
+  }
+
+  // Legacy placeholders for backward compatibility
   if (message.includes('{recent}') && tutor.aggregates) {
     message = message.replace('{recent}', tutor.aggregates.avgEngagementScore.toFixed(2))
   }

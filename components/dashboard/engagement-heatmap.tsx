@@ -28,7 +28,7 @@ export function EngagementHeatmap({ tutorId, days = 30 }: EngagementHeatmapProps
   useEffect(() => {
     const url = tutorId
       ? `/api/engagement/tutors/${tutorId}/timeline?days=${days}`
-      : `/api/engagement/metrics?days=${days}`
+      : `/api/engagement/metrics?days=${days}&includeEvents=true`
 
     fetch(url)
       .then(res => res.json())

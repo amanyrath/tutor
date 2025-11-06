@@ -231,8 +231,8 @@ export default function ReliabilityDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-amber-300">High Risk Tutors</p>
-                <p className="text-3xl font-bold text-amber-400 font-mono">{analysis.summary.tutorsAboveThreshold}</p>
-                <p className="text-xs text-amber-400/70 mt-1">15%+ reschedule rate</p>
+                <p className="text-3xl font-bold text-amber-400 font-mono">{analysis.summary.highRiskTutors}</p>
+                <p className="text-xs text-amber-400/70 mt-1">15%+ combined risk</p>
               </div>
               <AlertTriangle className="h-8 w-8 text-amber-400" />
             </div>

@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       summary: {
         ...reliabilityAnalysis.overallMetrics,
         criticalTutors: highRiskTutors.filter(t => t.urgency === 'critical').length,
-        highRiskTutors: highRiskTutors.filter(t => t.urgency === 'high').length,
+        highRiskTutors: highRiskTutors.length,
         upcomingRiskySessions: highRiskSessions.length
       }
     }

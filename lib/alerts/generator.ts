@@ -11,8 +11,7 @@ import {
   formatAlertMessage,
   calculateTutorPriorityScore,
   isAlertInCooldown,
-  ALERT_RULES,
-  type AlertRule
+  ALERT_RULES
 } from './rules'
 
 export interface GeneratedAlert {
@@ -273,6 +272,113 @@ export async function resolveAlert(alertId: string): Promise<void> {
       resolvedAt: new Date()
     }
   })
+}
+
+/**
+ * Update existing alerts with new message formats
+ * This regenerates messages for existing alerts based on current rules
+ */
+export async function updateExistingAlertMessages(): Promise<{
+  updated: number
+  errors: number
+}> {
+  const result = { updated: 0, errors: 0 }
+
+  try {
+    // Get all unresolved alerts
+    const alerts = await prisma.alert.findMany({
+      where: {
+        isResolved: false
+      },
+      include: {
+        tutor: {
+          include: {
+            aggregates: true
+          }
+        }
+      }
+    })
+
+    console.log(`Updating messages for ${alerts.length} existing alerts...`)
+
+    for (const alert of alerts) {
+      try {
+        // Re-evaluate all rules for this tutor to see which alerts should exist
+        const triggeredAlerts = evaluateAlertRules(alert.tutor)
+        
+        // Try to match alert by various criteria
+        let matchingRule: typeof ALERT_RULES[0] | undefined
+        let matchingAlert: ReturnType<typeof evaluateAlertRules>[0] | undefined
+
+        // First, try exact title match
+        matchingRule = ALERT_RULES.find(r => r.title === alert.title)
+        if (matchingRule) {
+          matchingAlert = triggeredAlerts.find(a => a.type === matchingRule!.type)
+        }
+
+        // If no exact match, try matching by category/severity and metric
+        if (!matchingRule) {
+          // Handle special case: "Below Target Engagement Score" -> "low_engagement"
+          if (alert.title.includes('Below Target') && alert.category === 'engagement') {
+            matchingRule = ALERT_RULES.find(r => r.type === 'low_engagement')
+            matchingAlert = triggeredAlerts.find(a => a.type === 'low_engagement')
+          }
+          // Handle "Declining Engagement" -> "declining_engagement"
+          else if (alert.title.includes('Declining') && alert.category === 'engagement') {
+            matchingRule = ALERT_RULES.find(r => r.type === 'declining_engagement')
+            matchingAlert = triggeredAlerts.find(a => a.type === 'declining_engagement')
+          }
+          // Try matching by category and severity
+          else {
+            matchingRule = ALERT_RULES.find(r => 
+              r.category === alert.category && r.severity === alert.severity
+            )
+            if (matchingRule) {
+              matchingAlert = triggeredAlerts.find(a => a.type === matchingRule!.type)
+            }
+          }
+        }
+
+        if (!matchingRule) {
+          console.warn(`No matching rule found for alert ${alert.id} with title "${alert.title}"`)
+          continue
+        }
+
+        if (!matchingAlert) {
+          // Alert condition no longer matches - this is okay, skip updating
+          console.log(`Alert ${alert.id} condition no longer matches, skipping update`)
+          continue
+        }
+
+        // Generate new message using current format
+        const newMessage = formatAlertMessage(matchingRule, alert.tutor, matchingAlert.details)
+
+        // Update the alert with new message and details
+        await prisma.alert.update({
+          where: { id: alert.id },
+          data: {
+            message: newMessage,
+            title: matchingRule.title, // Update title in case it changed
+            metric: matchingAlert.details.metric || null,
+            metricValue: matchingAlert.details.metricValue || null,
+            threshold: matchingAlert.details.threshold || null
+          }
+        })
+
+        result.updated++
+      } catch (error) {
+        console.error(`Error updating alert ${alert.id}:`, error)
+        result.errors++
+      }
+    }
+
+    console.log(`Alert message update complete: ${result.updated} updated, ${result.errors} errors`)
+  } catch (error) {
+    console.error('Error in alert message update process:', error)
+    throw error
+  }
+
+  return result
 }
 
 /**

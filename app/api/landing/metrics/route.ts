@@ -12,6 +12,7 @@ export async function GET() {
       criticalAlerts,
       pendingInterventions,
       activationMetrics,
+      interventionStats,
     ] = await Promise.all([
       // Total Active Tutors
       prisma.tutor.count({ where: { activeStatus: true } }),
@@ -50,7 +51,9 @@ export async function GET() {
       }).catch(() => 0), // Graceful fallback if alerts table doesn't exist yet
       
       // Pending Interventions (not yet sent)
-      Promise.resolve(0), // TODO: Implement after Prisma client regeneration
+      prisma.intervention.count({
+        where: { sentAt: null },
+      }).catch(() => 0),
       
       // Activation Rate (percentage of tutors with 10+ sessions in 30 days)
       prisma.tutorAggregate.count({
@@ -59,17 +62,53 @@ export async function GET() {
         const total = await prisma.tutorAggregate.count()
         return total > 0 ? (activeCount / total) * 100 : 0
       }).catch(() => 0),
+
+      // Intervention Success Stats
+      prisma.intervention.findMany({
+        select: {
+          sentAt: true,
+          clickedAt: true,
+          respondedAt: true,
+        },
+      }).then((interventions: any) => {
+        const sent = interventions.filter((i: any) => i.sentAt).length
+        const successful = interventions.filter((i: any) => i.clickedAt || i.respondedAt).length
+        return {
+          sent,
+          successful,
+          successRate: sent > 0 ? (successful / sent) * 100 : 0,
+        }
+      }).catch(() => ({ sent: 0, successful: 0, successRate: 0 })),
     ])
+
+    // Calculate Student Experience Score (0-100)
+    // Based on: engagement (40%), reliability (40%), and low churn risk (20%)
+    const engagementScore = (avgEngagement._avg.avgEngagementScore ?? 0) * 10 // Convert to 0-100
+    const reliabilityScore = (avgReliability._avg.reliabilityScore ?? 0) * 100
+    const totalTutorsCount = totalTutors > 0 ? totalTutors : 1
+    const churnRiskScore = ((totalTutorsCount - highRiskCount) / totalTutorsCount) * 100
+    const studentExperienceScore = (
+      engagementScore * 0.4 +
+      reliabilityScore * 0.4 +
+      churnRiskScore * 0.2
+    )
+
+    // Calculate Tutor Retention Rate (inverse of churn risk)
+    const tutorRetentionRate = ((totalTutorsCount - highRiskCount) / totalTutorsCount) * 100
 
     return NextResponse.json({
       totalTutors,
       highRiskCount,
       avgEngagement: avgEngagement._avg.avgEngagementScore ?? 0,
       poorFirstSessionCount,
-      avgReliability: (avgReliability._avg.reliabilityScore ?? 0) * 100, // Convert to percentage
+      avgReliability: (avgReliability._avg.reliabilityScore ?? 0) * 100,
       criticalAlerts,
       pendingInterventions,
       activationRate: activationMetrics,
+      // New student-focused metrics
+      studentExperienceScore: Math.round(studentExperienceScore * 10) / 10,
+      tutorRetentionRate: Math.round(tutorRetentionRate * 10) / 10,
+      interventionSuccessRate: Math.round(interventionStats.successRate * 10) / 10,
     })
   } catch (error) {
     console.error('Error fetching landing metrics:', error)

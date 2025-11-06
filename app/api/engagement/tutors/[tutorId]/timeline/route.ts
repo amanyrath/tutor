@@ -8,17 +8,31 @@ export async function GET(
   try {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '10')
+    const days = searchParams.get('days')
     const { tutorId } = await params
+
+    // Build where clause
+    const where: any = {
+      tutorId: tutorId
+    }
+
+    // If days is provided, filter by date range
+    if (days) {
+      const daysNum = parseInt(days)
+      const startDate = new Date()
+      startDate.setDate(startDate.getDate() - daysNum)
+      where.timestamp = {
+        gte: startDate
+      }
+    }
 
     // Fetch engagement events for the tutor
     const events = await prisma.engagementEvent.findMany({
-      where: {
-        tutorId: tutorId
-      },
+      where,
       orderBy: {
         timestamp: 'desc'
       },
-      take: limit,
+      take: days ? undefined : limit, // Only use limit if days is not specified
       select: {
         id: true,
         eventType: true,
@@ -28,7 +42,11 @@ export async function GET(
     })
 
     return NextResponse.json({
-      events,
+      events: events.map(e => ({
+        timestamp: e.timestamp.toISOString(),
+        eventType: e.eventType,
+        eventData: e.eventData
+      })),
       count: events.length
     })
   } catch (error) {

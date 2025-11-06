@@ -226,14 +226,77 @@ See `prisma/schema.prisma` for the complete schema.
 
 ## Deployment
 
-The application is configured for Vercel deployment:
+The application is configured for Vercel deployment with PostgreSQL database and automated cron jobs.
 
-1. Connect your GitHub repository to Vercel
-2. Configure environment variables in Vercel dashboard
-3. Set up Vercel Cron jobs (see `vercel.json`)
-4. Deploy
+### Quick Start
 
-See [docs/integrations/](./docs/integrations/) for deployment-specific setup guides.
+1. **Prerequisites:**
+   - Vercel account (Pro plan required for cron jobs)
+   - PostgreSQL database (Vercel Postgres recommended)
+   - API keys for AI, email, and optional services
+
+2. **Deployment Steps:**
+   ```bash
+   # Install Vercel CLI (if not already installed)
+   npm i -g vercel
+   
+   # Login and link project
+   vercel login
+   vercel link
+   
+   # Create database (via Vercel dashboard or CLI)
+   # Set environment variables in Vercel dashboard
+   # Run migrations
+   npx prisma migrate deploy
+   
+   # Deploy
+   vercel --prod
+   ```
+
+### Detailed Guides
+
+- **[DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)** - Complete deployment checklist
+- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Step-by-step deployment guide
+- **[DATABASE_SETUP.md](./DATABASE_SETUP.md)** - Database setup instructions
+- **[ENV_VARS_SETUP.md](./ENV_VARS_SETUP.md)** - Environment variables configuration
+- **[DATABASE_MIGRATION.md](./DATABASE_MIGRATION.md)** - Database migration guide
+- **[DEPLOYMENT_VERIFICATION.md](./DEPLOYMENT_VERIFICATION.md)** - Post-deployment verification
+
+### Free Tier Option
+
+For demo deployments, you can run completely free:
+
+- Use `vercel.free-tier.json` (daily cron jobs, works on Hobby plan)
+- Set `DISABLE_AI=true` to avoid AI API costs (uses mock data)
+- Use Neon or Supabase free tier for database
+- Resend free tier for email (100/day)
+
+See **[FREE_TIER_GUIDE.md](./FREE_TIER_GUIDE.md)** for complete free tier setup.
+
+### Key Requirements
+
+- **Vercel Pro Plan** ($20/month) - Required for hourly cron jobs
+- **PostgreSQL Database** - Vercel Postgres or external provider
+- **Environment Variables** - See `ENV_VARS_SETUP.md` for complete list
+- **CRON_SECRET** - Generated secure string for cron authentication
+
+### Cron Jobs
+
+The application includes automated cron jobs (requires Vercel Pro):
+- Alert generation: Every hour
+- Email sending: Every 6 hours  
+- Pattern discovery: Weekly (Mondays 2 AM)
+
+See `vercel.json` for configuration. Cron endpoints are protected with `CRON_SECRET`.
+
+### Helper Scripts
+
+- `scripts/deploy.sh` - Interactive deployment script
+- `scripts/migrate-database.sh` - Database migration helper
+- `scripts/setup-env-vars.sh` - Environment variables setup guide
+- `scripts/setup-database.sh` - Database setup helper
+
+For more details, see the deployment documentation files listed above.
 
 ## Contributing
 

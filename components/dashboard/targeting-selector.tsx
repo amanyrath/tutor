@@ -189,16 +189,16 @@ export function TargetingSelector({
                 <div>
                   <label className="text-xs text-gray-400 mb-1 block">Primary Subject</label>
                   <Select
-                    value={value.primarySubject?.[0] || ''}
+                    value={value.primarySubject?.[0] || 'all'}
                     onValueChange={(val) => updateCriteria({ 
-                      primarySubject: val ? [val] : undefined 
+                      primarySubject: val && val !== 'all' ? [val] : undefined 
                     })}
                   >
                     <SelectTrigger className="bg-[#1a1f2e] border-cyan-500/30 text-gray-200">
                       <SelectValue placeholder="All subjects" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#0f1419] border-cyan-500/30">
-                      <SelectItem value="">All subjects</SelectItem>
+                      <SelectItem value="all">All subjects</SelectItem>
                       {SUBJECTS.map(subject => (
                         <SelectItem key={subject} value={subject}>{subject}</SelectItem>
                       ))}
@@ -209,16 +209,16 @@ export function TargetingSelector({
                 <div>
                   <label className="text-xs text-gray-400 mb-1 block">Churn Risk</label>
                   <Select
-                    value={value.churnRiskLevel?.[0] || ''}
+                    value={value.churnRiskLevel?.[0] || 'all'}
                     onValueChange={(val) => updateCriteria({ 
-                      churnRiskLevel: val ? [val as 'Low' | 'Medium' | 'High'] : undefined 
+                      churnRiskLevel: val && val !== 'all' ? [val as 'Low' | 'Medium' | 'High'] : undefined 
                     })}
                   >
                     <SelectTrigger className="bg-[#1a1f2e] border-cyan-500/30 text-gray-200">
                       <SelectValue placeholder="All risk levels" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#0f1419] border-cyan-500/30">
-                      <SelectItem value="">All risk levels</SelectItem>
+                      <SelectItem value="all">All risk levels</SelectItem>
                       <SelectItem value="High">High Risk</SelectItem>
                       <SelectItem value="Medium">Medium Risk</SelectItem>
                       <SelectItem value="Low">Low Risk</SelectItem>
@@ -346,16 +346,16 @@ export function TargetingSelector({
                     <div>
                       <label className="text-xs text-gray-400 mb-1 block">Certification Level</label>
                       <Select
-                        value={value.certificationLevel?.[0] || ''}
+                        value={value.certificationLevel?.[0] || 'all'}
                         onValueChange={(val) => updateCriteria({ 
-                          certificationLevel: val ? [val] : undefined 
+                          certificationLevel: val && val !== 'all' ? [val] : undefined 
                         })}
                       >
                         <SelectTrigger className="bg-[#1a1f2e] border-cyan-500/30 text-gray-200">
                           <SelectValue placeholder="All levels" />
                         </SelectTrigger>
                         <SelectContent className="bg-[#0f1419] border-cyan-500/30">
-                          <SelectItem value="">All levels</SelectItem>
+                          <SelectItem value="all">All levels</SelectItem>
                           {CERTIFICATION_LEVELS.map(level => (
                             <SelectItem key={level} value={level}>{level}</SelectItem>
                           ))}
@@ -444,4 +444,5 @@ export function TargetingSelector({
     </div>
   )
 }
+
 

@@ -51,8 +51,7 @@ export default function DashboardPage() {
       icon: FlaskConical,
       href: '/dashboard/experiments',
       color: 'text-indigo-500',
-      bgColor: 'bg-indigo-50',
-      badge: 'Coming Soon'
+      bgColor: 'bg-indigo-50'
     },
     {
       title: 'Interventions',

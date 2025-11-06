@@ -1,0 +1,17 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/generate-alerts",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/send-emails",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/discover-patterns",
+      "schedule": "0 2 * * 1"
+    }
+  ]
+}
+

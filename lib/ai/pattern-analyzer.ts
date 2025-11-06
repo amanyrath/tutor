@@ -104,6 +104,12 @@ export async function analyzePatterns(data: {
   correlationMatrix: Record<string, Record<string, number>>
   recentInterventions?: any[]
 }): Promise<PatternAnalysisResult> {
+  // Check if AI is disabled (for free tier demos)
+  if (process.env.DISABLE_AI === 'true') {
+    console.log('AI features disabled. Returning mock pattern analysis.')
+    return getMockPatternAnalysis(data)
+  }
+
   if (!aiProvider) {
     throw new Error('AI API key not configured. Set OPENAI_API_KEY, OPENROUTER_API_KEY, or ANTHROPIC_API_KEY in your .env file')
   }
@@ -180,6 +186,28 @@ export async function predictNoShowRisk(data: {
   upcomingSessions: any[]
   historicalNoShows: any[]
 }): Promise<NoShowPrediction> {
+  // Check if AI is disabled (for free tier demos)
+  if (process.env.DISABLE_AI === 'true') {
+    console.log('AI features disabled. Returning mock no-show prediction.')
+    return {
+      risk_factors: [
+        { factor: 'Historical no-show rate', weight: 0.4, explanation: 'Tutors with higher historical no-show rates are at greater risk' },
+        { factor: 'Recent session frequency', weight: 0.3, explanation: 'Decreased session frequency correlates with no-show risk' }
+      ],
+      high_risk_sessions: data.upcomingSessions.slice(0, 3).map((s: any) => ({
+        session_id: s.sessionId || s.id,
+        risk_score: 0.65 + Math.random() * 0.2,
+        primary_risks: ['Historical pattern', 'Low engagement'],
+        mitigation: 'Send reminder email 24 hours before session'
+      })),
+      recommendations: [
+        'Send proactive reminders to high-risk sessions',
+        'Offer rescheduling options for at-risk tutors',
+        'Monitor engagement metrics closely'
+      ]
+    }
+  }
+
   if (!aiProvider) {
     throw new Error('AI API key not configured. Set OPENAI_API_KEY, OPENROUTER_API_KEY, or ANTHROPIC_API_KEY in your .env file')
   }
@@ -253,6 +281,24 @@ export async function predictNoShowRisk(data: {
 export async function generateInterventionRecommendations(
   tutorProfile: any
 ): Promise<InterventionRecommendations> {
+  // Check if AI is disabled (for free tier demos)
+  if (process.env.DISABLE_AI === 'true') {
+    console.log('AI features disabled. Returning mock intervention recommendations.')
+    return {
+      interventions: [
+        {
+          type: 'engagement',
+          priority: 'high',
+          title: 'Re-engagement Campaign',
+          description: 'Targeted outreach to increase session frequency and engagement.',
+          expected_outcome: '15-20% increase in session frequency within 30 days',
+          success_metrics: ['Session count increase', 'Login frequency', 'Engagement score'],
+          timeline: '2-4 weeks'
+        }
+      ]
+    }
+  }
+
   if (!aiProvider) {
     throw new Error('AI API key not configured. Set OPENAI_API_KEY, OPENROUTER_API_KEY, or ANTHROPIC_API_KEY in your .env file')
   }
@@ -368,4 +414,49 @@ export async function testAIConfiguration(): Promise<boolean> {
     return false
   }
 }
+
+/**
+ * Return mock pattern analysis when AI is disabled (for free tier demos)
+ */
+function getMockPatternAnalysis(data: {
+  weekOverWeekComparison: any
+  topPerformers: any[]
+  decliningTutors: any[]
+  correlationMatrix: Record<string, Record<string, number>>
+  recentInterventions?: any[]
+}): PatternAnalysisResult {
+  return {
+    patterns: [
+      {
+        type: 'engagement_increase',
+        title: 'Top Performers Show Consistent Engagement',
+        description: `Analysis of ${data.topPerformers.length} top-performing tutors reveals consistent engagement patterns.`,
+        affected_tutors: data.topPerformers.slice(0, 5).map((t: any) => t.tutorId || t.id),
+        confidence: 0.85,
+        statistical_significance: 0.92,
+        correlations: { engagement_score: 0.78, session_frequency: 0.65 },
+        recommendation: 'Consider replicating successful engagement strategies from top performers.',
+        expected_impact: 'Potential 15-20% engagement increase for similar tutors.'
+      },
+      {
+        type: 'churn_risk',
+        title: 'Declining Engagement Detected',
+        description: `${data.decliningTutors.length} tutors showing declining engagement metrics.`,
+        affected_tutors: data.decliningTutors.slice(0, 5).map((t: any) => t.tutorId || t.id),
+        confidence: 0.75,
+        statistical_significance: 0.68,
+        correlations: { engagement_score: -0.45, days_since_login: 0.52 },
+        recommendation: 'Implement targeted re-engagement campaigns for at-risk tutors.',
+        expected_impact: 'Could reduce churn by 25-30% with timely intervention.'
+      }
+    ],
+    summary: 'Pattern analysis completed. Key insights: Top performers maintain high engagement through consistent session frequency, while declining tutors show correlation with reduced login activity.',
+    priority_actions: [
+      'Replicate top performer strategies',
+      'Launch re-engagement campaign for declining tutors',
+      'Monitor engagement trends weekly'
+    ]
+  }
+}
+
 

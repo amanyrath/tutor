@@ -5,7 +5,8 @@ import {
   resolveAlert,
   getTutorAlerts,
   getHighPriorityAlerts,
-  getAlertStatistics
+  getAlertStatistics,
+  updateExistingAlertMessages
 } from '@/lib/alerts/generator'
 
 export const runtime = 'nodejs'
@@ -81,6 +82,36 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching alerts:', error)
     return NextResponse.json(
       { error: 'Failed to fetch alerts' },
+      { status: 500 }
+    )
+  }
+}
+
+// POST - Update existing alert messages or generate new alerts
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { action } = body
+
+    if (action === 'update-messages') {
+      // Update existing alerts with new message formats
+      const result = await updateExistingAlertMessages()
+      return NextResponse.json({
+        success: true,
+        result,
+        message: `Updated ${result.updated} alerts, ${result.errors} errors`
+      })
+    }
+
+    return NextResponse.json(
+      { error: 'Invalid action. Use "update-messages"' },
+      { status: 400 }
+    )
+
+  } catch (error) {
+    console.error('Error updating alerts:', error)
+    return NextResponse.json(
+      { error: 'Failed to update alerts', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }

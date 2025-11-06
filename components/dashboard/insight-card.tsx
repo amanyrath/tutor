@@ -323,3 +323,4 @@ export function InsightCard({ insight, onArchive, onMarkImplemented }: InsightCa
   )
 }
 
+

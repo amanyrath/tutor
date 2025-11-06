@@ -15,7 +15,7 @@ import { testAIConfiguration } from '../lib/ai/pattern-analyzer'
 async function main() {
   console.log('=== AI API Connection Test ===\n')
 
-  /  // Check environment variables
+  // Check environment variables
   console.log('1. Checking environment variables...')
   const hasOpenAI = !!process.env.OPENAI_API_KEY
   const hasOpenRouter = !!process.env.OPENROUTER_API_KEY

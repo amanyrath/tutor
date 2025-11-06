@@ -217,3 +217,4 @@ if __name__ == "__main__":
         print("\nAssignment summary:")
         print(assignments_df.groupby(['experiment_id', 'variant']).size())
 
+
