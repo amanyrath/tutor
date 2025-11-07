@@ -33,11 +33,8 @@ Technical implementation guides and completion summaries:
 ### Integrations (`integrations/`)
 Setup guides for external services and integrations:
 
-- **openrouter-setup.md** - OpenRouter AI setup guide
+- **openrouter-setup.md** - Comprehensive OpenRouter AI setup guide
 - **OPENAI_INTEGRATION.md** - OpenAI integration guide
-- **OPENROUTER_START_HERE.md** - Quick start for OpenRouter
-- **OPENROUTER_INTEGRATION.md** - OpenRouter integration details
-- **OPENROUTER_COMPLETE.md** - OpenRouter completion summary
 - **growthbook-integration.md** - GrowthBook experimentation setup
 
 ### Pull Requests (`pr/`)
@@ -52,8 +49,7 @@ Root-level documentation files:
 
 - **PROJECT_STATUS.md** - Current project status
 - **data-field-specs.md** - Data field specifications
-- **pr_task_list.md** - Task list for implementation
-- **SECURITY_ALERT.md** - Security alert documentation
+- **COMMIT_MESSAGE.md** - Commit message reference and templates
 - **tutor-quality-prd-nextjs.md** - Product requirements document
 
 ## Quick Links

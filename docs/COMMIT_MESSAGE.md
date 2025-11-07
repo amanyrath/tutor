@@ -1,3 +1,61 @@
+# Commit Message Reference
+
+This document provides commit message templates for the Tutor Quality Dashboard project.
+
+## Concise Version (Recommended)
+
+Use this for most commits:
+
+```
+feat: initial commit - Tutor Quality Dashboard platform
+
+Complete Next.js 16 application for tutor performance monitoring, AI-powered
+insights, automated alerts, and intervention campaigns.
+
+BREAKING CHANGE: Initial repository commit
+
+Features:
+- Real-time performance monitoring with churn risk analysis
+- AI-powered pattern discovery (OpenAI/OpenRouter/Anthropic)
+- Automated email alerts with Resend integration
+- Intervention campaigns with A/B testing via GrowthBook
+- Comprehensive dashboard views (insights, reliability, alerts, engagement)
+- Star performer analysis and first session deep dive
+
+Tech Stack:
+- Next.js 16 (App Router), React 19, TypeScript
+- PostgreSQL with Prisma ORM
+- shadcn/ui, Tailwind CSS, Recharts
+- AI: OpenAI/OpenRouter/Anthropic SDKs
+- Email: Resend with React Email templates
+- Experimentation: GrowthBook
+
+Security:
+- Comprehensive .gitignore excluding secrets and generated files
+- Environment variable template provided
+
+Documentation:
+- Organized 33+ docs into structured directories (features/, implementation/, integrations/, pr/)
+- Comprehensive README with quick start and setup guides
+- API documentation references included
+
+Cleanup:
+- Removed unnecessary files (.DS_Store, duplicates, cache)
+- Excluded generated data files (6.4MB CSV/PNG) from git
+- Updated .gitignore for Python, IDE files, and build artifacts
+- Created data/.gitkeep with regeneration instructions
+
+Setup: See QUICKSTART.md and README_SETUP.md for detailed instructions.
+
+This initial commit establishes a production-ready foundation for tutor quality
+monitoring with AI-powered insights and automated intervention capabilities.
+```
+
+## Detailed Version
+
+Use this for major releases or when more detail is needed:
+
+```
 feat: initial commit - Tutor Quality Dashboard platform
 
 Complete Next.js 16 application for tutor performance monitoring, AI-powered
@@ -118,5 +176,28 @@ See QUICKSTART.md and README_SETUP.md for detailed instructions.
 This initial commit establishes a production-ready foundation for tutor
 quality monitoring with AI-powered insights and automated intervention
 capabilities.
+```
 
+## Commit Message Format
 
+Follow conventional commits format:
+
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation changes
+- `style:` - Code style changes (formatting, etc.)
+- `refactor:` - Code refactoring
+- `test:` - Adding or updating tests
+- `chore:` - Maintenance tasks
+
+## Examples
+
+```
+feat: add email alert system with Resend integration
+
+fix: resolve pagination issue in tutor table
+
+docs: update deployment guide with Vercel Pro requirements
+
+refactor: consolidate OpenRouter integration docs
+```

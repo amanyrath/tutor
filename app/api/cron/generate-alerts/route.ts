@@ -6,11 +6,14 @@ export const runtime = 'nodejs'
 // This endpoint is designed to be called by Vercel Cron or external scheduler
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret if provided
+    // Vercel Cron requests don't send Authorization header
+    // Only require CRON_SECRET for manual/external calls
     const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // If CRON_SECRET is set and request has Authorization header, verify it
+    // Otherwise, allow the request (Vercel Cron or no auth required)
+    if (cronSecret && authHeader && authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

@@ -43,7 +43,7 @@ export async function Navbar() {
                   Home
                 </Button>
               </Link>
-              <Link href="/dashboard">
+              <Link href="/dashboard/tutors">
                 <Button 
                   variant="ghost" 
                   className="text-gray-300 hover:text-cyan-400 hover:bg-cyan-500/10 transition-colors"

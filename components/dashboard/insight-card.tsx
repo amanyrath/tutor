@@ -59,6 +59,8 @@ export function InsightCard({ insight, onArchive, onMarkImplemented }: InsightCa
         return <TrendingDown className="h-5 w-5 text-red-400" />
       case 'quality_improvement':
         return <Star className="h-5 w-5 text-yellow-400" />
+      case 'first_session_quality':
+        return <AlertTriangle className="h-5 w-5 text-amber-400" />
       default:
         return <Lightbulb className="h-5 w-5 text-cyan-400" />
     }
@@ -72,6 +74,8 @@ export function InsightCard({ insight, onArchive, onMarkImplemented }: InsightCa
       case 'engagement_decrease':
       case 'churn_risk':
         return 'bg-red-900/30 text-red-400 border-red-500/50'
+      case 'first_session_quality':
+        return 'bg-amber-900/30 text-amber-400 border-amber-500/50'
       default:
         return 'bg-blue-900/30 text-blue-400 border-blue-500/50'
     }

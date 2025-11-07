@@ -103,5 +103,5 @@ After successful migration:
 3. Test API endpoints
 4. Check Vercel logs for errors
 
-See `PRISMA_MIGRATION.md` for more details.
+For more details on Prisma setup, see `DATABASE_SETUP.md`.
 

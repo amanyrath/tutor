@@ -12,6 +12,7 @@
 
 import { prisma } from '../lib/db'
 import { analyzePatterns } from '../lib/ai/pattern-analyzer'
+import { generateFirstSessionInsights } from '../lib/analytics/first-session-insight-generator'
 
 interface WeekMetrics {
   avgEngagement: number
@@ -329,7 +330,42 @@ async function main() {
       })
     }
 
-    console.log(`\n✅ Stored ${analysis.patterns.length} insights`)
+    console.log(`\n✅ Stored ${analysis.patterns.length} AI-generated insights`)
+
+    // Generate and store first session insights
+    console.log('\n🔍 Generating first session pattern insights...')
+    try {
+      const firstSessionInsights = await generateFirstSessionInsights()
+      
+      if (firstSessionInsights.length > 0) {
+        for (const insight of firstSessionInsights) {
+          await prisma.patternInsight.create({
+            data: {
+              patternType: insight.patternType,
+              title: insight.title,
+              description: insight.description,
+              affectedTutorIds: insight.affectedTutorIds,
+              affectedTutorCount: insight.affectedTutorCount,
+              correlations: insight.correlations,
+              statisticalSignificance: insight.statisticalSignificance,
+              confidenceScore: insight.confidenceScore,
+              aiGeneratedRecommendation: insight.aiGeneratedRecommendation,
+              aiModel: 'first-session-analyzer',
+              analyzedPeriodStart: insight.analyzedPeriodStart,
+              analyzedPeriodEnd: insight.analyzedPeriodEnd,
+              status: 'active'
+            }
+          })
+        }
+        console.log(`✅ Stored ${firstSessionInsights.length} first session insights`)
+      } else {
+        console.log('ℹ️  No first session insights generated (no poor first session cohort found)')
+      }
+    } catch (error) {
+      console.error('⚠️  Error generating first session insights:', error)
+      // Don't fail the entire script if first session insights fail
+    }
+
     console.log('\n=== Pattern Discovery Complete ===')
     process.exit(0)
 

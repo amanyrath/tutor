@@ -152,6 +152,7 @@ model Intervention {
   templateId        String?   @map("template_id") // reference to template used
   experimentId      String?   @map("experiment_id") // A/B test group
   experimentVariant String?   @map("experiment_variant") // control, treatment_a, treatment_b, etc.
+  campaignId        String?   @map("campaign_id") // Reference to Campaign
   
   // Delivery tracking
   sentAt            DateTime? @map("sent_at")
@@ -177,6 +178,7 @@ model Intervention {
   updatedAt         DateTime  @updatedAt @map("updated_at")
   
   tutor             Tutor     @relation(fields: [tutorId], references: [tutorId])
+  campaign          Campaign? @relation(fields: [campaignId], references: [id])
   
   @@map("interventions")
   @@index([tutorId])
@@ -184,7 +186,174 @@ model Intervention {
   @@index([status])
   @@index([sentAt])
   @@index([experimentId])
+  @@index([campaignId])
   @@index([createdAt])
+}
+
+// Campaign model for tracking campaign creation and approval
+model Campaign {
+  id                  String    @id @default(cuid())
+  name                String
+  description         String?   @db.Text
+  templateId         String    @map("template_id")
+  targetingCriteria  Json      @map("targeting_criteria") // JSON of targeting criteria
+  variables           Json?     // JSON of template variables
+  
+  // Approval workflow
+  status              String    @default("draft") // draft, pending_approval, approved, rejected, active, completed, cancelled
+  submittedAt         DateTime? @map("submitted_at")
+  submittedBy         String?   @map("submitted_by")
+  approvedAt          DateTime? @map("approved_at")
+  approvedBy          String?   @map("approved_by")
+  rejectedAt          DateTime? @map("rejected_at")
+  rejectedBy          String?   @map("rejected_by")
+  rejectionReason     String?   @db.Text @map("rejection_reason")
+  
+  // Campaign execution
+  scheduledFor        DateTime? @map("scheduled_for")
+  startedAt           DateTime? @map("started_at")
+  completedAt         DateTime? @map("completed_at")
+  
+  // Experiment configuration
+  experimentId        String?   @map("experiment_id")
+  experimentVariant   String?   @map("experiment_variant")
+  
+  // Campaign metrics
+  estimatedAudience   Int       @map("estimated_audience")
+  actualAudience      Int?      @map("actual_audience")
+  
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  
+  interventions       Intervention[]
+  
+  @@map("campaigns")
+  @@index([status])
+  @@index([submittedAt])
+  @@index([approvedAt])
+  @@index([createdAt])
+}
+
+// Recommendation traceability model
+model Recommendation {
+  id                  String    @id @default(cuid())
+  tutorId             String    @map("tutor_id")
+  recommendationType  String    @map("recommendation_type") // intervention, training, support, etc.
+  priority            String    // critical, high, medium, low
+  category            String    // retention, engagement, quality, technical, first-impression
+  title               String
+  description         String    @db.Text
+  action              String    @db.Text // Specific action to take
+  
+  // Data inputs that generated this recommendation
+  dataInputs          Json      @map("data_inputs") // JSON of input metrics and values
+  modelOutputs        Json?     @map("model_outputs") // JSON of model predictions/outputs
+  decisionPath        Json?     @map("decision_path") // JSON of decision logic applied
+  
+  // Source tracking
+  sourceType          String    @map("source_type") // rule_based, ai_generated, manual
+  sourceId            String?   @map("source_id") // ID of alert, insight, or manual entry
+  aiModel             String?   @map("ai_model") // If AI-generated, which model
+  aiPrompt            String?   @db.Text @map("ai_prompt") // Prompt used if AI-generated
+  confidenceScore     Float?    @map("confidence_score") // 0-1 confidence score
+  
+  // Status and application
+  status              String    @default("active") // active, applied, dismissed, expired
+  appliedAt           DateTime? @map("applied_at")
+  appliedBy           String?   @map("applied_by")
+  dismissedAt         DateTime? @map("dismissed_at")
+  dismissedBy         String?   @map("dismissed_by")
+  dismissalReason     String?   @db.Text @map("dismissal_reason")
+  
+  // Impact tracking (references existing intervention impact tracking)
+  interventionId     String?   @map("intervention_id") // If recommendation led to intervention
+  impactMetrics       Json?     @map("impact_metrics") // JSON of impact measurements
+  
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  
+  tutor               Tutor     @relation(fields: [tutorId], references: [tutorId])
+  
+  @@map("recommendations")
+  @@index([tutorId])
+  @@index([recommendationType])
+  @@index([priority])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Model verification and evaluation tracking
+model ModelVerification {
+  id                  String    @id @default(cuid())
+  modelType           String    @map("model_type") // churn_prediction, engagement_prediction, ai_insight, etc.
+  modelVersion        String?   @map("model_version")
+  
+  // Prediction/Output details
+  predictionId       String?   @map("prediction_id") // ID of the prediction being verified
+  predictionValue    Float?    @map("prediction_value")
+  actualValue         Float?    @map("actual_value")
+  tutorId             String?   @map("tutor_id")
+  
+  // Verification results
+  accuracy            Float?    // Calculated accuracy if actual value available
+  error               Float?    // Prediction error
+  isCorrect           Boolean?   @map("is_correct") // For binary predictions
+  verificationStatus  String    @map("verification_status") // pending, verified, failed, expired
+  
+  // External API verification
+  apiProvider         String?   @map("api_provider") // openai, anthropic, etc.
+  apiModel            String?   @map("api_model")
+  apiResponse         Json?     @map("api_response") // Full API response for verification
+  apiVersion          String?   @map("api_version") // API version used
+  verificationChecks  Json?     @map("verification_checks") // JSON of verification test results
+  
+  // Quality metrics
+  confidenceScore     Float?    @map("confidence_score")
+  qualityScore        Float?    @map("quality_score")
+  
+  verifiedAt          DateTime? @map("verified_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  
+  @@map("model_verifications")
+  @@index([modelType])
+  @@index([verificationStatus])
+  @@index([tutorId])
+  @@index([createdAt])
+  @@index([apiProvider])
+}
+
+// Model performance monitoring
+model ModelPerformance {
+  id                  String    @id @default(cuid())
+  modelType           String    @map("model_type")
+  modelVersion        String?   @map("model_version")
+  
+  // Performance metrics
+  totalPredictions    Int       @default(0) @map("total_predictions")
+  verifiedPredictions Int       @default(0) @map("verified_predictions")
+  accuracy            Float?    // Overall accuracy
+  precision           Float?    // For classification models
+  recall              Float?    // For classification models
+  f1Score             Float?    @map("f1_score")
+  mae                 Float?    // Mean absolute error for regression
+  rmse                Float?    // Root mean squared error
+  
+  // Drift detection
+  driftDetected       Boolean   @default(false) @map("drift_detected")
+  driftScore          Float?    @map("drift_score")
+  lastDriftCheck      DateTime? @map("last_drift_check")
+  
+  // Time period
+  periodStart         DateTime  @map("period_start")
+  periodEnd           DateTime  @map("period_end")
+  
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  
+  @@map("model_performance")
+  @@index([modelType])
+  @@index([periodStart, periodEnd])
+  @@index([driftDetected])
 }
 
 model EngagementEvent {
