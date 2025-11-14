@@ -8,9 +8,20 @@ import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Activity, Trophy, TrendingUp, Shield, FlaskConical, Mail, AlertCircle } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+
+interface DashboardItem {
+  title: string
+  description: string
+  icon: LucideIcon
+  href: string
+  color: string
+  bgColor: string
+  badge?: string
+}
 
 export default function DashboardPage() {
-  const dashboards = [
+  const dashboards: DashboardItem[] = [
     {
       title: 'Activation & Engagement',
       description: 'Monitor tutor activity patterns, login frequency, and engagement metrics',
