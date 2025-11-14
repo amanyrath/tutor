@@ -33,8 +33,7 @@ export default function DashboardPage() {
       icon: TrendingUp,
       href: '/dashboard/insights',
       color: 'text-purple-500',
-      bgColor: 'bg-purple-50',
-      badge: 'Coming Soon'
+      bgColor: 'bg-purple-50'
     },
     {
       title: 'Reliability & No-Shows',
@@ -42,8 +41,7 @@ export default function DashboardPage() {
       icon: Shield,
       href: '/dashboard/reliability',
       color: 'text-green-500',
-      bgColor: 'bg-green-50',
-      badge: 'Coming Soon'
+      bgColor: 'bg-green-50'
     },
     {
       title: 'Experiments',
@@ -59,8 +57,7 @@ export default function DashboardPage() {
       icon: Mail,
       href: '/dashboard/interventions',
       color: 'text-pink-500',
-      bgColor: 'bg-pink-50',
-      badge: 'Coming Soon'
+      bgColor: 'bg-pink-50'
     },
     {
       title: 'Alerts',
@@ -68,8 +65,7 @@ export default function DashboardPage() {
       icon: AlertCircle,
       href: '/dashboard/alerts',
       color: 'text-red-500',
-      bgColor: 'bg-red-50',
-      badge: 'Coming Soon'
+      bgColor: 'bg-red-50'
     }
   ]
 
