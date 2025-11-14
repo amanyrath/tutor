@@ -5,7 +5,10 @@
  * tutors who need intervention.
  */
 
-import { Tutor, TutorAggregate } from '@prisma/client'
+import { prisma } from '@/lib/db'
+
+type Tutor = NonNullable<Awaited<ReturnType<typeof prisma.tutor.findUnique>>>
+type TutorAggregate = NonNullable<Awaited<ReturnType<typeof prisma.tutorAggregate.findUnique>>>
 
 export type AlertType = 
   | 'no_login_7d'

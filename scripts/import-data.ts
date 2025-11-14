@@ -164,7 +164,7 @@ async function importSessions(dataDir: string) {
   console.log(`   Found ${records.length} sessions`)
 
   const sessions = records.map((row) => {
-    const sessionData: Prisma.SessionCreateInput = {
+    const sessionData = {
       sessionId: row.session_id,
       tutor: { connect: { tutorId: row.tutor_id } },
       sessionDatetime: parseDate(row.session_datetime) ?? new Date(),

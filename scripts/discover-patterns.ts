@@ -41,17 +41,17 @@ async function getWeekMetrics(startDate: Date, endDate: Date): Promise<WeekMetri
     }
   })
 
-  const uniqueTutors = new Set(sessions.map(s => s.tutorId))
-  const engagementScores = sessions.filter(s => s.engagementScore).map(s => s.engagementScore!)
-  const ratings = sessions.filter(s => s.studentRating).map(s => s.studentRating!)
+  const uniqueTutors = new Set(sessions.map((s: typeof sessions[number]) => s.tutorId))
+  const engagementScores = sessions.filter((s: typeof sessions[number]) => s.engagementScore).map((s: typeof sessions[number]) => s.engagementScore!)
+  const ratings = sessions.filter((s: typeof sessions[number]) => s.studentRating).map((s: typeof sessions[number]) => s.studentRating!)
 
   const tutorsWithHighChurn = sessions
-    .filter(s => s.tutor.aggregates && s.tutor.aggregates.churnRiskLevel === 'High')
-    .map(s => s.tutorId)
+    .filter((s: typeof sessions[number]) => s.tutor.aggregates && s.tutor.aggregates.churnRiskLevel === 'High')
+    .map((s: typeof sessions[number]) => s.tutorId)
 
   return {
-    avgEngagement: engagementScores.reduce((sum, s) => sum + s, 0) / engagementScores.length,
-    avgRating: ratings.reduce((sum, r) => sum + r, 0) / ratings.length,
+    avgEngagement: engagementScores.reduce((sum: number, s: typeof engagementScores[number]) => sum + s, 0) / engagementScores.length,
+    avgRating: ratings.reduce((sum: number, r: typeof ratings[number]) => sum + r, 0) / ratings.length,
     totalSessions: sessions.length,
     activeTutors: uniqueTutors.size,
     avgSessionsPerTutor: sessions.length / uniqueTutors.size,
@@ -88,10 +88,10 @@ async function getTopPerformers(startDate: Date, endDate: Date, limit: number = 
   })
 
   // Calculate weekly performance score
-  const tutorScores = tutorsWithMetrics.map(tutor => {
+  const tutorScores = tutorsWithMetrics.map((tutor: typeof tutorsWithMetrics[number]) => {
     const sessions = tutor.sessions
-    const avgEngagement = sessions.reduce((sum, s) => sum + (s.engagementScore || 0), 0) / sessions.length
-    const avgRating = sessions.reduce((sum, s) => sum + (s.studentRating || 0), 0) / sessions.length
+    const avgEngagement = sessions.reduce((sum: number, s: typeof sessions[number]) => sum + (s.engagementScore || 0), 0) / sessions.length
+    const avgRating = sessions.reduce((sum: number, s: typeof sessions[number]) => sum + (s.studentRating || 0), 0) / sessions.length
 
     return {
       tutorId: tutor.tutorId,
@@ -105,7 +105,7 @@ async function getTopPerformers(startDate: Date, endDate: Date, limit: number = 
   })
 
   return tutorScores
-    .sort((a, b) => b.weeklyScore - a.weeklyScore)
+    .sort((a: typeof tutorScores[number], b: typeof tutorScores[number]) => b.weeklyScore - a.weeklyScore)
     .slice(0, limit)
 }
 
@@ -131,18 +131,18 @@ async function getDecliningTutors(currentWeekStart: Date, previousWeekStart: Dat
     }
   })
 
-  const declines = tutors.map(tutor => {
+  const declines = tutors.map((tutor: typeof tutors[number]) => {
     const currentWeekSessions = tutor.sessions.filter(
-      s => s.sessionDatetime >= currentWeekStart && s.sessionDatetime < currentWeekEnd
+      (s: typeof tutor.sessions[number]) => s.sessionDatetime >= currentWeekStart && s.sessionDatetime < currentWeekEnd
     )
     const previousWeekSessions = tutor.sessions.filter(
-      s => s.sessionDatetime >= previousWeekStart && s.sessionDatetime < previousWeekEnd
+      (s: typeof tutor.sessions[number]) => s.sessionDatetime >= previousWeekStart && s.sessionDatetime < previousWeekEnd
     )
 
     if (previousWeekSessions.length === 0) return null
 
-    const currentAvgEng = currentWeekSessions.reduce((sum, s) => sum + (s.engagementScore || 0), 0) / (currentWeekSessions.length || 1)
-    const previousAvgEng = previousWeekSessions.reduce((sum, s) => sum + (s.engagementScore || 0), 0) / previousWeekSessions.length
+    const currentAvgEng = currentWeekSessions.reduce((sum: number, s: typeof currentWeekSessions[number]) => sum + (s.engagementScore || 0), 0) / (currentWeekSessions.length || 1)
+    const previousAvgEng = previousWeekSessions.reduce((sum: number, s: typeof previousWeekSessions[number]) => sum + (s.engagementScore || 0), 0) / previousWeekSessions.length
 
     const decline = previousAvgEng - currentAvgEng
 
@@ -157,8 +157,8 @@ async function getDecliningTutors(currentWeekStart: Date, previousWeekStart: Dat
   })
 
   return declines
-    .filter(d => d !== null && d.decline > 0.5) // Significant decline
-    .sort((a, b) => b!.decline - a!.decline)
+    .filter((d: typeof declines[number]) => d !== null && d.decline > 0.5) // Significant decline
+    .sort((a: typeof declines[number], b: typeof declines[number]) => b!.decline - a!.decline)
     .slice(0, limit)
 }
 
@@ -262,7 +262,7 @@ async function main() {
       include: { aggregates: true }
     })
 
-    const tutorData = allTutors.filter(t => t.aggregates).map(t => ({
+    const tutorData = allTutors.filter((t: typeof allTutors[number]) => t.aggregates).map((t: typeof allTutors[number]) => ({
       tutorId: t.tutorId,
       avgEngagement: t.aggregates!.avgEngagementScore,
       avgRating: t.aggregates!.avgRating30d,
@@ -284,7 +284,7 @@ async function main() {
         changes
       },
       topPerformers,
-      decliningTutors: decliningTutors.filter(d => d !== null),
+      decliningTutors: decliningTutors.filter((d: typeof decliningTutors[number]) => d !== null),
       correlationMatrix
     })
 

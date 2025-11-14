@@ -93,50 +93,50 @@ export async function getFirstSessionMetrics(): Promise<FirstSessionMetrics[]> {
   })
 
   return tutors
-    .filter(t => t.aggregates && t.sessions.length > 0)
-    .map(t => {
+    .filter((t: typeof tutors[number]) => t.aggregates && t.sessions.length > 0)
+    .map((t: typeof tutors[number]) => {
       const agg = t.aggregates!
       const firstSessions = t.sessions
 
       // Calculate averages from first sessions
-      const validSessions = firstSessions.filter(s => 
-        s.engagementScore !== null && 
+      const validSessions = firstSessions.filter((s: typeof firstSessions[number]) =>
+        s.engagementScore !== null &&
         s.empathyScore !== null &&
         s.clarityScore !== null
       )
 
       const avgEngagement = validSessions.length > 0
-        ? validSessions.reduce((sum, s) => sum + (s.engagementScore || 0), 0) / validSessions.length
+        ? validSessions.reduce((sum: number, s: typeof validSessions[number]) => sum + (s.engagementScore || 0), 0) / validSessions.length
         : agg.avgEngagementScore
 
       const avgEmpathy = validSessions.length > 0
-        ? validSessions.reduce((sum, s) => sum + (s.empathyScore || 0), 0) / validSessions.length
+        ? validSessions.reduce((sum: number, s: typeof validSessions[number]) => sum + (s.empathyScore || 0), 0) / validSessions.length
         : agg.avgEmpathyScore
 
       const avgClarity = validSessions.length > 0
-        ? validSessions.reduce((sum, s) => sum + (s.clarityScore || 0), 0) / validSessions.length
+        ? validSessions.reduce((sum: number, s: typeof validSessions[number]) => sum + (s.clarityScore || 0), 0) / validSessions.length
         : agg.avgClarityScore
 
       const avgSatisfaction = validSessions.length > 0
-        ? validSessions.reduce((sum, s) => sum + (s.studentSatisfaction || 0), 0) / validSessions.length
+        ? validSessions.reduce((sum: number, s: typeof validSessions[number]) => sum + (s.studentSatisfaction || 0), 0) / validSessions.length
         : agg.avgStudentSatisfaction
 
-      const techIssueSessions = firstSessions.filter(s => s.hadTechnicalIssues === true).length
+      const techIssueSessions = firstSessions.filter((s: typeof firstSessions[number]) => s.hadTechnicalIssues === true).length
       const technicalIssueRate = firstSessions.length > 0 ? techIssueSessions / firstSessions.length : 0
 
-      const cameraOnSessions = firstSessions.filter(s => s.tutorCameraOnPct !== null)
+      const cameraOnSessions = firstSessions.filter((s: typeof firstSessions[number]) => s.tutorCameraOnPct !== null)
       const avgCameraOnPct = cameraOnSessions.length > 0
-        ? cameraOnSessions.reduce((sum, s) => sum + (s.tutorCameraOnPct || 0), 0) / cameraOnSessions.length
+        ? cameraOnSessions.reduce((sum: number, s: typeof cameraOnSessions[number]) => sum + (s.tutorCameraOnPct || 0), 0) / cameraOnSessions.length
         : 0
 
-      const speakRatioSessions = firstSessions.filter(s => s.tutorSpeakRatio !== null)
+      const speakRatioSessions = firstSessions.filter((s: typeof firstSessions[number]) => s.tutorSpeakRatio !== null)
       const avgSpeakRatio = speakRatioSessions.length > 0
-        ? speakRatioSessions.reduce((sum, s) => sum + (s.tutorSpeakRatio || 0), 0) / speakRatioSessions.length
+        ? speakRatioSessions.reduce((sum: number, s: typeof speakRatioSessions[number]) => sum + (s.tutorSpeakRatio || 0), 0) / speakRatioSessions.length
         : 0.5
 
-      const screenShareSessions = firstSessions.filter(s => s.screenSharePct !== null)
+      const screenShareSessions = firstSessions.filter((s: typeof firstSessions[number]) => s.screenSharePct !== null)
       const avgScreenSharePct = screenShareSessions.length > 0
-        ? screenShareSessions.reduce((sum, s) => sum + (s.screenSharePct || 0), 0) / screenShareSessions.length
+        ? screenShareSessions.reduce((sum: number, s: typeof screenShareSessions[number]) => sum + (s.screenSharePct || 0), 0) / screenShareSessions.length
         : 0
 
       return {

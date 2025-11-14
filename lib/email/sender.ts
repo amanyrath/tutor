@@ -6,7 +6,15 @@
 
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy initialization to avoid errors during build time
+let resend: Resend | null = null
+
+function getResendClient(): Resend {
+  if (!resend) {
+    resend = new Resend(process.env.RESEND_API_KEY || '')
+  }
+  return resend
+}
 
 export interface EmailOptions {
   to: string
@@ -58,7 +66,7 @@ export async function sendEmail(
       tags.push({ name: 'email_type', value: tracking.emailType })
     }
 
-    const result = await resend.emails.send({
+    const result = await getResendClient().emails.send({
       from,
       to: options.to,
       subject: options.subject,

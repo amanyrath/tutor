@@ -76,23 +76,23 @@ export async function analyzeTutorReliability(tutorId: string): Promise<Reschedu
   const totalSessions = sessions.length
   
   // Calculate reschedule patterns
-  const rescheduledSessions = sessions.filter(s => s.sessionCompleted === false && s.tutorShowed)
+  const rescheduledSessions = sessions.filter((s: typeof sessions[number]) => s.sessionCompleted === false && s.tutorShowed)
   const rescheduleCount = rescheduledSessions.length
   const rescheduleRate = totalSessions > 0 ? rescheduleCount / totalSessions : 0
 
   // Average ratings
   const rescheduledRatings = rescheduledSessions
-    .map(s => s.studentRating)
-    .filter(r => r !== null) as number[]
+    .map((s: typeof rescheduledSessions[number]) => s.studentRating)
+    .filter((r: number | null) => r !== null) as number[]
   const avgRatingWhenRescheduled = rescheduledRatings.length > 0
-    ? rescheduledRatings.reduce((sum, r) => sum + r, 0) / rescheduledRatings.length
+    ? rescheduledRatings.reduce((sum: number, r: typeof rescheduledRatings[number]) => sum + r, 0) / rescheduledRatings.length
     : null
 
   const allRatings = sessions
-    .map(s => s.studentRating)
-    .filter(r => r !== null) as number[]
+    .map((s: typeof sessions[number]) => s.studentRating)
+    .filter((r: number | null) => r !== null) as number[]
   const avgRatingOverall = allRatings.length > 0
-    ? allRatings.reduce((sum, r) => sum + r, 0) / allRatings.length
+    ? allRatings.reduce((sum: number, r: typeof allRatings[number]) => sum + r, 0) / allRatings.length
     : 0
 
   // Time of day pattern
@@ -177,11 +177,11 @@ export async function analyzeTutorReliability(tutorId: string): Promise<Reschedu
   }
 
   // Calculate correlations
-  const technicalIssueSessions = sessions.filter(s => s.hadTechnicalIssues).length
+  const technicalIssueSessions = sessions.filter((s: typeof sessions[number]) => s.hadTechnicalIssues).length
   const technicalIssueRate = totalSessions > 0 ? technicalIssueSessions / totalSessions : 0
   const technicalIssueCorrelation = calculateCorrelation(
-    sessions.map(s => (s.sessionCompleted === false && s.tutorShowed ? 1 : 0)),
-    sessions.map(s => (s.hadTechnicalIssues ? 1 : 0))
+    sessions.map((s: typeof sessions[number]) => (s.sessionCompleted === false && s.tutorShowed ? 1 : 0)),
+    sessions.map((s: typeof sessions[number]) => (s.hadTechnicalIssues ? 1 : 0))
   )
 
   const churnCorrelation = tutor.aggregates 
@@ -267,13 +267,13 @@ export async function analyzeRescheduleCorrelations(): Promise<RescheduleCorrela
   })
 
   // Extract data arrays
-  const rescheduleRates = tutors.map(t => t.rescheduleRate)
-  const churnProbs = tutors.map(t => t.aggregates?.churnProbability || 0)
-  const ratings = tutors.map(t => t.aggregates?.avgRating30d || 0)
-  const reliabilityScores = tutors.map(t => t.reliabilityScore)
-  const technicalIssueRates = tutors.map(t => t.aggregates?.technicalIssueRate || 0)
-  const empathyScores = tutors.map(t => t.aggregates?.avgEmpathyScore || 0)
-  const engagementScores = tutors.map(t => t.aggregates?.avgEngagementScore || 0)
+  const rescheduleRates = tutors.map((t: typeof tutors[number]) => t.rescheduleRate)
+  const churnProbs = tutors.map((t: typeof tutors[number]) => t.aggregates?.churnProbability || 0)
+  const ratings = tutors.map((t: typeof tutors[number]) => t.aggregates?.avgRating30d || 0)
+  const reliabilityScores = tutors.map((t: typeof tutors[number]) => t.reliabilityScore)
+  const technicalIssueRates = tutors.map((t: typeof tutors[number]) => t.aggregates?.technicalIssueRate || 0)
+  const empathyScores = tutors.map((t: typeof tutors[number]) => t.aggregates?.avgEmpathyScore || 0)
+  const engagementScores = tutors.map((t: typeof tutors[number]) => t.aggregates?.avgEngagementScore || 0)
 
   const correlations: RescheduleCorrelation[] = []
 
@@ -365,13 +365,13 @@ export async function performReliabilityAnalysis(
   })
 
   // Calculate overall metrics
-  const avgRescheduleRate = tutors.reduce((sum, t) => sum + t.rescheduleRate, 0) / tutors.length
-  const tutorsAboveThreshold = tutors.filter(t => t.rescheduleRate > rescheduleThreshold).length
+  const avgRescheduleRate = tutors.reduce((sum: number, t: typeof tutors[number]) => sum + t.rescheduleRate, 0) / tutors.length
+  const tutorsAboveThreshold = tutors.filter((t: typeof tutors[number]) => t.rescheduleRate > rescheduleThreshold).length
 
   // Get high reschedule tutors
   const highRescheduleTutorIds = tutors
-    .filter(t => t.rescheduleRate > rescheduleThreshold)
-    .map(t => t.tutorId)
+    .filter((t: typeof tutors[number]) => t.rescheduleRate > rescheduleThreshold)
+    .map((t: typeof tutors[number]) => t.tutorId)
 
   const highRescheduleTutors: RescheduleMetrics[] = []
   for (const tutorId of highRescheduleTutorIds) {
@@ -384,7 +384,7 @@ export async function performReliabilityAnalysis(
   }
 
   // Sort by reschedule rate
-  highRescheduleTutors.sort((a, b) => b.rescheduleRate - a.rescheduleRate)
+  highRescheduleTutors.sort((a: typeof highRescheduleTutors[number], b: typeof highRescheduleTutors[number]) => b.rescheduleRate - a.rescheduleRate)
 
   // Get correlations
   const correlations = await analyzeRescheduleCorrelations()
@@ -461,7 +461,7 @@ export async function getHighRiskReliabilityTutors(): Promise<{
     const sessions = tutor.sessions
     if (sessions.length === 0) continue
 
-    const noShows = sessions.filter(s => !s.tutorShowed).length
+    const noShows = sessions.filter((s: typeof sessions[number]) => !s.tutorShowed).length
     const noShowRate = noShows / sessions.length
 
     const combinedRisk = (tutor.rescheduleRate + noShowRate) / 2

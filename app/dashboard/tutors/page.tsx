@@ -16,7 +16,7 @@ async function getTutors() {
     })
 
     // Sort by churn probability in memory
-    tutors.sort((a, b) => {
+    tutors.sort((a: typeof tutors[number], b: typeof tutors[number]) => {
       const probA = a.aggregates?.churnProbability ?? 0
       const probB = b.aggregates?.churnProbability ?? 0
       return probB - probA

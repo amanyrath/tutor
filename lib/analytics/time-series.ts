@@ -53,23 +53,26 @@ export async function getWeeklyEngagementTrends(options: {
   const dateThreshold = new Date()
   dateThreshold.setDate(dateThreshold.getDate() - days)
 
-  const metricColumn = Prisma.raw(`${metricType}_score`)
+  const metricColumn = `${metricType}_score`
 
   // Query sessions table and aggregate by date
-  const results = await prisma.$queryRaw<Array<{date: Date, avg_value: number, count: bigint}>>(
-    Prisma.sql`
-    SELECT 
+  const results = await prisma.$queryRawUnsafe(
+    `
+    SELECT
       DATE(session_datetime) as date,
       AVG(${metricColumn}) as avg_value,
       COUNT(*) as count
     FROM sessions
     WHERE session_completed = true
-      AND session_datetime >= ${dateThreshold}
+      AND session_datetime >= ?
       AND ${metricColumn} IS NOT NULL
-      ${tutorId ? Prisma.sql`AND tutor_id = ${tutorId}` : Prisma.empty}
+      ${tutorId ? 'AND tutor_id = ?' : ''}
     GROUP BY DATE(session_datetime)
     ORDER BY date ASC
-  `)
+  `,
+    dateThreshold,
+    ...(tutorId ? [tutorId] : [])
+  ) as Array<{date: Date, avg_value: number, count: bigint}>
 
   return results.map(r => ({
     date: r.date,
@@ -236,20 +239,23 @@ export async function detectSeasonalPatterns(options: {
   const dateThreshold = new Date()
   dateThreshold.setDate(dateThreshold.getDate() - days)
 
-  const results = await prisma.$queryRaw<Array<{day_of_week: number, avg_engagement: number, count: bigint}>>(
-    Prisma.sql`
-    SELECT 
+  const results = await prisma.$queryRawUnsafe(
+    `
+    SELECT
       EXTRACT(DOW FROM session_datetime)::int as day_of_week,
       AVG(engagement_score) as avg_engagement,
       COUNT(*) as count
     FROM sessions
     WHERE session_completed = true
-      AND session_datetime >= ${dateThreshold}
+      AND session_datetime >= ?
       AND engagement_score IS NOT NULL
-      ${tutorId ? Prisma.sql`AND tutor_id = ${tutorId}` : Prisma.empty}
+      ${tutorId ? 'AND tutor_id = ?' : ''}
     GROUP BY EXTRACT(DOW FROM session_datetime)
     ORDER BY day_of_week ASC
-  `)
+  `,
+    dateThreshold,
+    ...(tutorId ? [tutorId] : [])
+  ) as Array<{day_of_week: number, avg_engagement: number, count: bigint}>
 
   const dayLabels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
@@ -285,29 +291,29 @@ export async function getCohortEngagementTrends(options: {
       break
   }
 
-  const fieldRaw = Prisma.raw(field)
-
-  const results = await prisma.$queryRaw<Array<{
-    cohort: string
-    date: Date
-    avg_engagement: number
-    count: bigint
-  }>>(
-    Prisma.sql`
-    SELECT 
-      ${fieldRaw} as cohort,
+  const results = await prisma.$queryRawUnsafe(
+    `
+    SELECT
+      ${field} as cohort,
       DATE(s.session_datetime) as date,
       AVG(s.engagement_score) as avg_engagement,
       COUNT(*) as count
     FROM sessions s
     JOIN tutors t ON s.tutor_id = t.tutor_id
-    ${cohortField === 'churnRiskLevel' ? Prisma.sql`LEFT JOIN tutor_aggregates ta ON t.tutor_id = ta.tutor_id` : Prisma.empty}
+    ${cohortField === 'churnRiskLevel' ? 'LEFT JOIN tutor_aggregates ta ON t.tutor_id = ta.tutor_id' : ''}
     WHERE s.session_completed = true
-      AND s.session_datetime >= ${dateThreshold}
+      AND s.session_datetime >= ?
       AND s.engagement_score IS NOT NULL
-    GROUP BY ${fieldRaw}, DATE(s.session_datetime)
+    GROUP BY ${field}, DATE(s.session_datetime)
     ORDER BY cohort, date ASC
-  `)
+  `,
+    dateThreshold
+  ) as Array<{
+    cohort: string
+    date: Date
+    avg_engagement: number
+    count: bigint
+  }>
 
   // Group by cohort
   const cohorts: Record<string, TimeSeriesDataPoint[]> = {}
@@ -352,7 +358,7 @@ export async function calculateRetentionCurve(options: {
   })
 
   const cohortSize = cohortTutors.length
-  const tutorIds = cohortTutors.map(t => t.tutorId)
+  const tutorIds = cohortTutors.map((t: typeof cohortTutors[number]) => t.tutorId)
 
   if (cohortSize === 0) {
     return []

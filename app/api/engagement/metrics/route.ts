@@ -88,11 +88,11 @@ export async function GET(request: Request) {
 
     // Calculate averages
     const currentValue = currentSessions.length > 0
-      ? currentSessions.reduce((sum, s) => sum + (s[metricField as keyof typeof s] as number), 0) / currentSessions.length
+      ? currentSessions.reduce((sum: number, s: typeof currentSessions[number]) => sum + (s[metricField as keyof typeof s] as number), 0) / currentSessions.length
       : 0
 
     const previousValue = previousSessions.length > 0
-      ? previousSessions.reduce((sum, s) => sum + (s[metricField as keyof typeof s] as number), 0) / previousSessions.length
+      ? previousSessions.reduce((sum: number, s: typeof previousSessions[number]) => sum + (s[metricField as keyof typeof s] as number), 0) / previousSessions.length
       : null
 
     // Calculate trend
@@ -137,7 +137,7 @@ export async function GET(request: Request) {
         }
       })
 
-      events = engagementEvents.map(e => ({
+      events = engagementEvents.map((e: typeof engagementEvents[number]) => ({
         timestamp: e.timestamp.toISOString(),
         eventType: e.eventType,
         eventData: e.eventData

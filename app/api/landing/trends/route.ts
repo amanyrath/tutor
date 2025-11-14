@@ -27,7 +27,7 @@ export async function GET() {
     })
 
     // Format data by date
-    const trendData = sessions.map(s => ({
+    const trendData = sessions.map((s: typeof sessions[number]) => ({
       date: s.sessionDatetime.toISOString().split('T')[0],
       engagement: s._avg.engagementScore || 0,
       rating: (s._avg.studentRating || 0) * 2, // Normalize to 10 scale
@@ -36,7 +36,7 @@ export async function GET() {
     }))
 
     // Group by date and average
-    const groupedByDate = trendData.reduce((acc, item) => {
+    const groupedByDate = trendData.reduce((acc: Record<string, any>, item: typeof trendData[number]) => {
       if (!acc[item.date]) {
         acc[item.date] = {
           date: item.date,

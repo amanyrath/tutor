@@ -108,8 +108,8 @@ export async function getTutorPerformanceMetrics(): Promise<TutorPerformanceMetr
   })
 
   return tutors
-    .filter(t => t.aggregates) // Only include tutors with aggregate data
-    .map(t => {
+    .filter((t: typeof tutors[number]) => t.aggregates) // Only include tutors with aggregate data
+    .map((t: typeof tutors[number]) => {
       const agg = t.aggregates!
       const compositeScore = calculateCompositeScore(agg)
 
@@ -143,7 +143,7 @@ export function segmentPerformers(
   tutors: TutorPerformanceMetrics[]
 ): StarPerformerAnalysis['segments'] {
   // Sort by composite score
-  const sorted = [...tutors].sort((a, b) => b.compositeScore - a.compositeScore)
+  const sorted = [...tutors].sort((a: typeof tutors[number], b: typeof tutors[number]) => b.compositeScore - a.compositeScore)
 
   // Define segments: top 10%, middle 80%, bottom 10%
   const starCount = Math.max(1, Math.ceil(sorted.length * 0.10))

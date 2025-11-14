@@ -54,9 +54,9 @@ export async function calculateNoShowRisk(tutorId: string): Promise<NoShowRiskAs
 
   // Calculate historical metrics
   const recentSessions = tutor.sessions
-  const noShowCount = recentSessions.filter(s => !s.tutorShowed).length
-  const rescheduleCount = recentSessions.filter(s => s.sessionCompleted === false && s.tutorShowed).length
-  const completedCount = recentSessions.filter(s => s.sessionCompleted).length
+  const noShowCount = recentSessions.filter((s: typeof recentSessions[number]) => !s.tutorShowed).length
+  const rescheduleCount = recentSessions.filter((s: typeof recentSessions[number]) => s.sessionCompleted === false && s.tutorShowed).length
+  const completedCount = recentSessions.filter((s: typeof recentSessions[number]) => s.sessionCompleted).length
 
   const noShowRate = recentSessions.length > 0 ? noShowCount / recentSessions.length : 0
   const rescheduleRate = recentSessions.length > 0 ? rescheduleCount / recentSessions.length : 0

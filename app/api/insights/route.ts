@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       totalAffectedTutors: 0
     }
 
-    insights.forEach(insight => {
+    insights.forEach((insight: typeof insights[number]) => {
       stats.byType[insight.patternType] = (stats.byType[insight.patternType] || 0) + 1
       stats.avgConfidence += insight.confidenceScore
       stats.totalAffectedTutors += insight.affectedTutorCount

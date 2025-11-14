@@ -37,7 +37,7 @@ export async function GET() {
       }
     > = {}
 
-    sessions.forEach((session) => {
+    sessions.forEach((session: typeof sessions[number]) => {
       const dateKey = session.sessionDatetime.toISOString().split('T')[0]
 
       if (!dailyData[dateKey]) {

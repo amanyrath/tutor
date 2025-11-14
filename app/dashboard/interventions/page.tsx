@@ -28,21 +28,21 @@ async function getInterventionsData() {
       }),
     ])
 
-    const statusCount = stats.reduce((acc, stat) => {
+    const statusCount = stats.reduce((acc: Record<string, number>, stat: typeof stats[number]) => {
       acc[stat.status] = stat._count
       return acc
     }, {} as Record<string, number>)
 
     // Calculate engagement metrics
-    const sentInterventions = interventions.filter(i => i.sentAt)
+    const sentInterventions = interventions.filter((i: typeof interventions[number]) => i.sentAt)
     const openRate = sentInterventions.length > 0
-      ? (interventions.filter(i => i.openedAt).length / sentInterventions.length) * 100
+      ? (interventions.filter((i: typeof interventions[number]) => i.openedAt).length / sentInterventions.length) * 100
       : 0
     const clickRate = sentInterventions.length > 0
-      ? (interventions.filter(i => i.clickedAt).length / sentInterventions.length) * 100
+      ? (interventions.filter((i: typeof interventions[number]) => i.clickedAt).length / sentInterventions.length) * 100
       : 0
     const responseRate = sentInterventions.length > 0
-      ? (interventions.filter(i => i.respondedAt).length / sentInterventions.length) * 100
+      ? (interventions.filter((i: typeof interventions[number]) => i.respondedAt).length / sentInterventions.length) * 100
       : 0
 
     return {
@@ -192,7 +192,7 @@ export default async function InterventionsPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {interventions.map((intervention) => {
+              {interventions.map((intervention: typeof interventions[number]) => {
                 const statusBadge = getStatusBadge(intervention.status)
                 const StatusIcon = statusBadge.icon
 

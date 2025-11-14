@@ -108,7 +108,7 @@ export async function findTargetTutors(
   })
 
   // Filter by aggregate criteria (not directly available in Prisma where)
-  const filteredTutors = tutors.filter(tutor => {
+  const filteredTutors = tutors.filter((tutor: typeof tutors[number]) => {
     if (!tutor.aggregates) return false
 
     const agg = tutor.aggregates
@@ -155,7 +155,7 @@ export async function findTargetTutors(
   })
 
   // Calculate match score and matched criteria for each tutor
-  const results = filteredTutors.map(tutor => {
+  const results = filteredTutors.map((tutor: typeof filteredTutors[number]) => {
     const matchedCriteria: string[] = []
     let score = 0
 
@@ -192,7 +192,7 @@ export async function findTargetTutors(
   })
 
   // Sort by score (highest first)
-  results.sort((a, b) => b.score - a.score)
+  results.sort((a: typeof results[number], b: typeof results[number]) => b.score - a.score)
 
   return {
     tutors: results,
