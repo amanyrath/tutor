@@ -33,8 +33,7 @@ export default function DashboardPage() {
       icon: TrendingUp,
       href: '/dashboard/insights',
       color: 'text-purple-500',
-      bgColor: 'bg-purple-50',
-      badge: 'Coming Soon'
+      bgColor: 'bg-purple-50'
     },
     {
       title: 'Reliability & No-Shows',
@@ -42,8 +41,7 @@ export default function DashboardPage() {
       icon: Shield,
       href: '/dashboard/reliability',
       color: 'text-green-500',
-      bgColor: 'bg-green-50',
-      badge: 'Coming Soon'
+      bgColor: 'bg-green-50'
     },
     {
       title: 'Experiments',
@@ -59,8 +57,7 @@ export default function DashboardPage() {
       icon: Mail,
       href: '/dashboard/interventions',
       color: 'text-pink-500',
-      bgColor: 'bg-pink-50',
-      badge: 'Coming Soon'
+      bgColor: 'bg-pink-50'
     },
     {
       title: 'Alerts',
@@ -68,8 +65,7 @@ export default function DashboardPage() {
       icon: AlertCircle,
       href: '/dashboard/alerts',
       color: 'text-red-500',
-      bgColor: 'bg-red-50',
-      badge: 'Coming Soon'
+      bgColor: 'bg-red-50'
     }
   ]
 
@@ -88,15 +84,8 @@ export default function DashboardPage() {
           return (
             <Card key={dashboard.href} className="hover:shadow-lg transition-shadow">
               <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className={`p-3 rounded-lg ${dashboard.bgColor}`}>
-                    <Icon className={`h-6 w-6 ${dashboard.color}`} />
-                  </div>
-                  {dashboard.badge && (
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                      {dashboard.badge}
-                    </span>
-                  )}
+                <div className={`p-3 rounded-lg ${dashboard.bgColor} w-fit`}>
+                  <Icon className={`h-6 w-6 ${dashboard.color}`} />
                 </div>
                 <CardTitle className="mt-4">{dashboard.title}</CardTitle>
                 <CardDescription>{dashboard.description}</CardDescription>
@@ -106,9 +95,8 @@ export default function DashboardPage() {
                   <Button
                     variant="outline"
                     className="w-full"
-                    disabled={dashboard.badge === 'Coming Soon'}
                   >
-                    {dashboard.badge === 'Coming Soon' ? 'Coming Soon' : 'View Dashboard'}
+                    View Dashboard
                   </Button>
                 </Link>
               </CardContent>
