@@ -33,7 +33,7 @@ async function getExperimentsData(status?: string) {
       }),
     ])
     
-    const statusCount = stats.reduce((acc, stat) => {
+    const statusCount = stats.reduce((acc: Record<string, number>, stat: typeof stats[number]) => {
       acc[stat.status] = stat._count
       return acc
     }, {} as Record<string, number>)

@@ -188,10 +188,10 @@ export async function getCampaignStats(campaignId?: string): Promise<{
   })
 
   const totalInterventions = interventions.length
-  const sentCount = interventions.filter(i => i.sentAt).length
-  const openedCount = interventions.filter(i => i.openedAt).length
-  const clickedCount = interventions.filter(i => i.clickedAt).length
-  const respondedCount = interventions.filter(i => i.respondedAt).length
+  const sentCount = interventions.filter((i: typeof interventions[number]) => i.sentAt).length
+  const openedCount = interventions.filter((i: typeof interventions[number]) => i.openedAt).length
+  const clickedCount = interventions.filter((i: typeof interventions[number]) => i.clickedAt).length
+  const respondedCount = interventions.filter((i: typeof interventions[number]) => i.respondedAt).length
 
   return {
     totalCampaigns: campaignId ? 1 : 0, // Would need to track campaigns separately

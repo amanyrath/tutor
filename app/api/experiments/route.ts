@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       totalAssignments: 0
     }
     
-    experiments.forEach(exp => {
+    experiments.forEach((exp: typeof experiments[number]) => {
       stats.byStatus[exp.status] = (stats.byStatus[exp.status] || 0) + 1
       stats.totalAssignments += exp._count.assignments
     })

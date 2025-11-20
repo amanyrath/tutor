@@ -18,7 +18,7 @@ async function main() {
       select: { tutorId: true }
     })
 
-    const tutorIds = tutors.map(t => t.tutorId)
+    const tutorIds = tutors.map((t: typeof tutors[number]) => t.tutorId)
 
     // Create demo insights
     const insights = [

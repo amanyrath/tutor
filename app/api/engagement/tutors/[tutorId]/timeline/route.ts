@@ -42,7 +42,7 @@ export async function GET(
     })
 
     return NextResponse.json({
-      events: events.map(e => ({
+      events: events.map((e: typeof events[number]) => ({
         timestamp: e.timestamp.toISOString(),
         eventType: e.eventType,
         eventData: e.eventData

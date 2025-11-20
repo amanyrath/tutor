@@ -58,7 +58,7 @@ export async function GET() {
       // Activation Rate (percentage of tutors with 10+ sessions in 30 days)
       prisma.tutorAggregate.count({
         where: { totalSessions30d: { gte: 10 } }
-      }).then(async (activeCount) => {
+      }).then(async (activeCount: number) => {
         const total = await prisma.tutorAggregate.count()
         return total > 0 ? (activeCount / total) * 100 : 0
       }).catch(() => 0),

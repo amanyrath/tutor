@@ -85,8 +85,8 @@ export async function generateAlerts(): Promise<AlertGenerationResult> {
         // Process each triggered alert
         for (const alert of triggeredAlerts) {
           // Check if this alert type is in cooldown
-          const lastAlert = existingAlerts.find(a => 
-            a.category === alert.category && 
+          const lastAlert = existingAlerts.find((a: typeof existingAlerts[number]) =>
+            a.category === alert.category &&
             a.severity === alert.severity
           )
 

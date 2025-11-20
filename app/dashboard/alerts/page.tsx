@@ -30,7 +30,7 @@ async function getAlertsData() {
       }),
     ])
 
-    const severityCount = stats.reduce((acc, stat) => {
+    const severityCount = stats.reduce((acc: Record<string, number>, stat: typeof stats[number]) => {
       acc[stat.severity] = stat._count
       return acc
     }, {} as Record<string, number>)
